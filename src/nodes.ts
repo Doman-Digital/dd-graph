@@ -1,0 +1,307 @@
+import type { GraphIds } from "./ids";
+
+// Node builders for a sitewide schema.org entity graph. Every relation that
+// would naively be a nested literal (provider, worksFor, publisher, isPartOf,
+// founder) is instead a `{'@id': ...}` reference into the sitewide spine, so
+// the graph stays one connected entity instead of N disconnected islands.
+//
+// These builders are deliberately domain-agnostic: niche/business-type
+// mapping (e.g. "salon" -> ['BeautySalon', 'HealthAndBeautyBusiness',
+// 'LocalBusiness']), CMS-shape adapters, and env-gated fields like
+// aggregateRating provenance stay in the consuming site, not here.
+
+export type OrganizationInput = {
+  name: string;
+  legalName?: string;
+  description: string;
+  url: string;
+  phone?: string;
+  email?: string;
+  /** A brand mark image. Distinct from `image` (general photography). */
+  logoUrl?: string;
+  image?: string[];
+  address?: {
+    streetAddress?: string;
+    locality?: string;
+    region?: string;
+    postalCode?: string;
+    country?: string;
+  };
+  geo?: { latitude: string; longitude: string };
+  priceRange?: string;
+  /** Pre-shaped schema.org rows: one entry per group of days sharing hours.
+   * Adapt your CMS's per-day shape to this before calling. */
+  openingHoursSpecification?: Array<{ dayOfWeek: string[]; opens: string; closes: string }>;
+  /** @id refs to Place nodes elsewhere in the same graph. */
+  areaServedIds?: string[];
+  sameAs?: string[];
+  aggregateRating?: { ratingValue: number; reviewCount: number } | null;
+  /** Pre-built OfferCatalog (see buildOfferCatalog), passed through as-is. */
+  hasOfferCatalog?: Record<string, unknown>;
+  /** @id ref to a Person node -- the founder/owner, if the business has one
+   * canonical figurehead worth naming on the Organization itself. */
+  founderId?: string;
+};
+
+export function buildOrganization(
+  input: OrganizationInput,
+  ids: GraphIds,
+  types: string | string[] = "LocalBusiness",
+) {
+  const node: Record<string, unknown> = {
+    "@type": types,
+    "@id": ids.org,
+    name: input.name,
+    description: input.description,
+    url: input.url,
+  };
+  if (input.legalName) node.legalName = input.legalName;
+  if (input.phone) node.telephone = input.phone;
+  if (input.email) node.email = input.email;
+  if (input.logoUrl) node.logo = input.logoUrl;
+  if (input.image && input.image.length > 0) node.image = input.image;
+  if (input.address) node.address = { "@type": "PostalAddress", ...input.address };
+  if (input.geo) node.geo = { "@type": "GeoCoordinates", ...input.geo };
+  if (input.priceRange) node.priceRange = input.priceRange;
+  if (input.openingHoursSpecification && input.openingHoursSpecification.length > 0) {
+    node.openingHoursSpecification = input.openingHoursSpecification.map((h) => ({
+      "@type": "OpeningHoursSpecification",
+      ...h,
+    }));
+  }
+  if (input.areaServedIds && input.areaServedIds.length > 0) {
+    node.areaServed = input.areaServedIds.map((id) => ({ "@id": id }));
+  }
+  if (input.sameAs && input.sameAs.length > 0) node.sameAs = input.sameAs;
+  if (input.aggregateRating) {
+    node.aggregateRating = {
+      "@type": "AggregateRating",
+      bestRating: 5,
+      worstRating: 1,
+      ...input.aggregateRating,
+    };
+  }
+  if (input.hasOfferCatalog) node.hasOfferCatalog = input.hasOfferCatalog;
+  if (input.founderId) node.founder = { "@id": input.founderId };
+  return node;
+}
+
+export function buildWebsite(input: { name: string; url: string }, ids: GraphIds) {
+  return {
+    "@type": "WebSite",
+    "@id": ids.website,
+    name: input.name,
+    url: input.url,
+    publisher: { "@id": ids.org },
+  };
+}
+
+/** Convenience for the two nodes almost every page includes: Organization +
+ * WebSite. A founder/team Person is deliberately NOT bundled here -- not
+ * every business has one canonical figurehead -- add `buildPerson(...)`
+ * alongside this in the consumer if it does. */
+export function buildSpine(
+  organizationInput: OrganizationInput,
+  websiteInput: { name: string; url: string },
+  ids: GraphIds,
+  types?: string | string[],
+): [ReturnType<typeof buildOrganization>, ReturnType<typeof buildWebsite>] {
+  return [buildOrganization(organizationInput, ids, types), buildWebsite(websiteInput, ids)];
+}
+
+export type PersonInput = {
+  name: string;
+  slug: string;
+  jobTitle?: string;
+  description?: string;
+  imageUrl?: string;
+  credentials?: Array<{ label: string; number?: string | null; url?: string | null }>;
+};
+
+export function buildPerson(input: PersonInput, ids: GraphIds) {
+  const node: Record<string, unknown> = {
+    "@type": "Person",
+    "@id": ids.person(input.slug),
+    name: input.name,
+    worksFor: { "@id": ids.org },
+  };
+  if (input.jobTitle) node.jobTitle = input.jobTitle;
+  if (input.description) node.description = input.description;
+  if (input.imageUrl) node.image = input.imageUrl;
+  if (input.credentials && input.credentials.length > 0) {
+    node.identifier = input.credentials
+      .filter((c) => c.number)
+      .map((c) => ({
+        "@type": "PropertyValue",
+        propertyID: c.label,
+        value: c.number,
+        ...(c.url ? { url: c.url } : {}),
+      }));
+  }
+  return node;
+}
+
+export type PlaceInput = {
+  name: string;
+  slug: string;
+  description?: string;
+  postcodeArea?: string;
+  postcodes?: string[];
+  /** County/region name, expressed as a nested AdministrativeArea literal on
+   * this Place -- not a second, unlinked areaServed entry. Use when there's
+   * no separate document/entity for the county itself. */
+  county?: string;
+};
+
+export function buildPlace(input: PlaceInput, ids: GraphIds) {
+  const node: Record<string, unknown> = {
+    "@type": "Place",
+    "@id": ids.place(input.slug),
+    name: input.name,
+  };
+  if (input.description) node.description = input.description;
+  if (input.postcodeArea) {
+    node.additionalProperty = {
+      "@type": "PropertyValue",
+      name: "postcodeArea",
+      value: input.postcodeArea,
+    };
+  } else if (input.postcodes && input.postcodes.length > 0) {
+    node.additionalProperty = {
+      "@type": "PropertyValue",
+      name: "postcodes",
+      value: input.postcodes.join(", "),
+    };
+  }
+  if (input.county) {
+    node.containedInPlace = { "@type": "AdministrativeArea", name: input.county };
+  }
+  return node;
+}
+
+export type ServiceInput = {
+  name: string;
+  slug: string;
+  description?: string;
+  serviceType?: string;
+  priceFromMinor?: number | null;
+  priceUnit?: string | null;
+  url: string;
+};
+
+export function buildService(input: ServiceInput, ids: GraphIds) {
+  const node: Record<string, unknown> = {
+    "@type": "Service",
+    "@id": ids.service(input.slug),
+    name: input.name,
+    url: input.url,
+    provider: { "@id": ids.org },
+    isPartOf: { "@id": ids.website },
+  };
+  if (input.description) node.description = input.description;
+  if (input.serviceType) node.serviceType = input.serviceType;
+  if (input.priceFromMinor) {
+    node.offers = {
+      "@type": "Offer",
+      price: (input.priceFromMinor / 100).toFixed(2),
+      priceCurrency: "GBP",
+      ...(input.priceUnit ? { description: input.priceUnit } : {}),
+    };
+  }
+  return node;
+}
+
+/** OfferCatalog whose Offers point at the same Service `@id`s the individual
+ * service pages emit, rather than re-serialising each as an anonymous inline
+ * literal. Callers must include the corresponding buildService(...) nodes in
+ * the same graph. */
+export function buildOfferCatalog(name: string, services: Array<{ slug: string }>, ids: GraphIds) {
+  return {
+    "@type": "OfferCatalog",
+    name,
+    itemListElement: services.map((s) => ({
+      "@type": "Offer",
+      itemOffered: { "@id": ids.service(s.slug) },
+    })),
+  };
+}
+
+export type FAQInput = { question: string; answerText: string };
+
+export function buildFAQPage(faqs: FAQInput[], opts?: { id?: string; speakable?: boolean }) {
+  if (faqs.length === 0) return null;
+  const node: Record<string, unknown> = {
+    "@type": "FAQPage",
+    ...(opts?.id ? { "@id": opts.id } : {}),
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answerText },
+    })),
+  };
+  if (opts?.speakable) {
+    node.speakable = {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["[data-speakable-question]", "[data-speakable-answer]"],
+    };
+  }
+  return node;
+}
+
+export type BreadcrumbItem = { name: string; url: string };
+
+export function buildBreadcrumbs(items: BreadcrumbItem[], id?: string) {
+  return {
+    "@type": "BreadcrumbList",
+    ...(id ? { "@id": id } : {}),
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+export function buildItemList(items: { name: string; url: string }[]) {
+  return {
+    "@type": "ItemList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      url: item.url,
+    })),
+  };
+}
+
+export type ArticleInput = {
+  slug: string;
+  headline: string;
+  description?: string;
+  datePublished?: string;
+  dateModified?: string;
+  imageUrl?: string;
+  /** slug of a Person node elsewhere in the same graph (see buildPerson). */
+  authorSlug?: string;
+  speakable?: { cssSelector: string[] };
+};
+
+export function buildArticle(input: ArticleInput, ids: GraphIds) {
+  const node: Record<string, unknown> = {
+    "@type": "Article",
+    "@id": ids.article(input.slug),
+    headline: input.headline,
+    publisher: { "@id": ids.org },
+    isPartOf: { "@id": ids.website },
+  };
+  if (input.description) node.description = input.description;
+  if (input.datePublished) node.datePublished = input.datePublished;
+  if (input.dateModified) node.dateModified = input.dateModified;
+  if (input.imageUrl) node.image = [input.imageUrl];
+  if (input.authorSlug) node.author = { "@id": ids.person(input.authorSlug) };
+  if (input.speakable) {
+    node.speakable = { "@type": "SpeakableSpecification", cssSelector: input.speakable.cssSelector };
+  }
+  return node;
+}
