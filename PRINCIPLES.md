@@ -84,6 +84,37 @@ SEO comes up."
    step on a git-dependency install; always rebuild and commit `dist/` before
    tagging.
 
+## The seam with `@domandigital/seo`
+
+A sibling package, `@domandigital/seo`, owns the route-tree facts: which pages
+exist, what each targets, how pages relate to each other, what belongs in the
+sitemap. This package owns none of that — it only knows how to turn entity
+facts into valid, connected JSON-LD.
+
+**Neither package depends on the other.** A dependency between them would
+force every consumer onto matching versions of both for any change to either,
+across 15+ repos. Instead the consuming repo composes them at the call site:
+
+```ts
+const trail = getBreadcrumbTrail(routeKey);   // @domandigital/seo — route facts
+const crumbs = buildBreadcrumbs(ids, trail);  // @domandigital/graph — node shape
+```
+
+The one touchpoint is breadcrumbs, because a `BreadcrumbList` node is the one
+JSON-LD shape that structurally requires knowing the route tree. `seo` owns
+`getBreadcrumbTrail` because it owns the route tree; `graph` owns
+`buildBreadcrumbs` because it owns node shape and `@id` discipline. Neither
+package reaches into the other's territory: `graph` never grows a route model
+of its own (don't derive a trail from `usePathname()` inside this package or
+any consumer's copy of it — take it from `seo`), and `seo` never grows a
+JSON-LD emitter (a "generate schema.org breadcrumbs" helper inside `seo`
+would be principle 6's `if (niche === 'salon')` mistake, just at the
+package-boundary level instead of inside a single consumer).
+
+If a second touchpoint like this turns up, resist folding it into either
+package by default — decide again, on its own merits, which side of the
+facts/emission line it falls on.
+
 ## When you're porting a new client repo onto this package
 
 Read `README.md` first for the API. Then:
