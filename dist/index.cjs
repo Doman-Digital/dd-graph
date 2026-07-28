@@ -145,6 +145,9 @@ function buildOrganization(input, ids, types = "LocalBusiness") {
   if (input.contactPoint && input.contactPoint.length > 0) {
     node.contactPoint = input.contactPoint.map((c) => ({ "@type": "ContactPoint", ...c }));
   }
+  if (input.identifiers && input.identifiers.length > 0) {
+    node.identifier = input.identifiers.map((i) => ({ "@type": "PropertyValue", ...i }));
+  }
   return node;
 }
 function buildWebsite(input, ids) {

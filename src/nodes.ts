@@ -53,6 +53,10 @@ export type OrganizationInput = {
     email?: Nullable<string>;
     telephone?: Nullable<string>;
   }>;
+  /** Registry identifiers (Companies House number, a regulator registration,
+   * etc.) as `PropertyValue` rows -- generic Organization data, not niche
+   * mapping, so it stays in the package rather than a per-consumer literal. */
+  identifiers?: Array<{ propertyID: string; name?: Nullable<string>; value: string; url?: Nullable<string> }>;
 };
 
 export function buildOrganization(
@@ -97,6 +101,9 @@ export function buildOrganization(
   if (input.founderId) node.founder = { "@id": input.founderId };
   if (input.contactPoint && input.contactPoint.length > 0) {
     node.contactPoint = input.contactPoint.map((c) => ({ "@type": "ContactPoint", ...c }));
+  }
+  if (input.identifiers && input.identifiers.length > 0) {
+    node.identifier = input.identifiers.map((i) => ({ "@type": "PropertyValue", ...i }));
   }
   return node;
 }

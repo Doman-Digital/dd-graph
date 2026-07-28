@@ -97,6 +97,15 @@ type OrganizationInput = {
         email?: Nullable<string>;
         telephone?: Nullable<string>;
     }>;
+    /** Registry identifiers (Companies House number, a regulator registration,
+     * etc.) as `PropertyValue` rows -- generic Organization data, not niche
+     * mapping, so it stays in the package rather than a per-consumer literal. */
+    identifiers?: Array<{
+        propertyID: string;
+        name?: Nullable<string>;
+        value: string;
+        url?: Nullable<string>;
+    }>;
 };
 declare function buildOrganization(input: OrganizationInput, ids: GraphIds, types?: string | string[]): Record<string, unknown>;
 declare function buildWebsite(input: {

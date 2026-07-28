@@ -144,6 +144,22 @@ describe("buildService", () => {
   });
 });
 
+describe("buildOrganization identifiers", () => {
+  it("emits identifier PropertyValue rows only when provided", () => {
+    const ids = createGraphIds(SITE_URL);
+    const withIdentifiers = buildOrganization(
+      { ...ORG_INPUT, identifiers: [{ propertyID: "Companies House", value: "12345678" }] },
+      ids,
+    );
+    const withoutIdentifiers = buildOrganization(ORG_INPUT, ids);
+
+    expect(withIdentifiers.identifier).toEqual([
+      { "@type": "PropertyValue", propertyID: "Companies House", value: "12345678" },
+    ]);
+    expect(withoutIdentifiers.identifier).toBeUndefined();
+  });
+});
+
 describe("buildPerson", () => {
   it("emits sameAs and hasCredential as EducationalOccupationalCredential, distinct from identifier", () => {
     const ids = createGraphIds(SITE_URL);
