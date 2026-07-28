@@ -47,28 +47,29 @@ declare function buildGraph(nodes: Array<JsonLdNode | null | undefined>): JsonLd
  */
 declare function findGraphIssues(graph: JsonLdGraph): string[];
 
+type Nullable<T> = T | null | undefined;
 type OrganizationInput = {
     name: string;
-    legalName?: string;
+    legalName?: Nullable<string>;
     description: string;
     url: string;
-    phone?: string;
-    email?: string;
+    phone?: Nullable<string>;
+    email?: Nullable<string>;
     /** A brand mark image. Distinct from `image` (general photography). */
-    logoUrl?: string;
+    logoUrl?: Nullable<string>;
     image?: string[];
     address?: {
-        streetAddress?: string;
-        locality?: string;
-        region?: string;
-        postalCode?: string;
-        country?: string;
-    };
+        streetAddress?: Nullable<string>;
+        locality?: Nullable<string>;
+        region?: Nullable<string>;
+        postalCode?: Nullable<string>;
+        country?: Nullable<string>;
+    } | null;
     geo?: {
         latitude: string;
         longitude: string;
-    };
-    priceRange?: string;
+    } | null;
+    priceRange?: Nullable<string>;
     /** Pre-shaped schema.org rows: one entry per group of days sharing hours.
      * Adapt your CMS's per-day shape to this before calling. */
     openingHoursSpecification?: Array<{
@@ -87,7 +88,7 @@ type OrganizationInput = {
     hasOfferCatalog?: Record<string, unknown>;
     /** @id ref to a Person node -- the founder/owner, if the business has one
      * canonical figurehead worth naming on the Organization itself. */
-    founderId?: string;
+    founderId?: Nullable<string>;
 };
 declare function buildOrganization(input: OrganizationInput, ids: GraphIds, types?: string | string[]): Record<string, unknown>;
 declare function buildWebsite(input: {
@@ -113,35 +114,35 @@ declare function buildSpine(organizationInput: OrganizationInput, websiteInput: 
 type PersonInput = {
     name: string;
     slug: string;
-    jobTitle?: string;
-    description?: string;
-    imageUrl?: string;
+    jobTitle?: Nullable<string>;
+    description?: Nullable<string>;
+    imageUrl?: Nullable<string>;
     credentials?: Array<{
         label: string;
-        number?: string | null;
-        url?: string | null;
+        number?: Nullable<string>;
+        url?: Nullable<string>;
     }>;
 };
 declare function buildPerson(input: PersonInput, ids: GraphIds): Record<string, unknown>;
 type PlaceInput = {
     name: string;
     slug: string;
-    description?: string;
-    postcodeArea?: string;
-    postcodes?: string[];
+    description?: Nullable<string>;
+    postcodeArea?: Nullable<string>;
+    postcodes?: Nullable<string[]>;
     /** County/region name, expressed as a nested AdministrativeArea literal on
      * this Place -- not a second, unlinked areaServed entry. Use when there's
      * no separate document/entity for the county itself. */
-    county?: string;
+    county?: Nullable<string>;
 };
 declare function buildPlace(input: PlaceInput, ids: GraphIds): Record<string, unknown>;
 type ServiceInput = {
     name: string;
     slug: string;
-    description?: string;
-    serviceType?: string;
-    priceFromMinor?: number | null;
-    priceUnit?: string | null;
+    description?: Nullable<string>;
+    serviceType?: Nullable<string>;
+    priceFromMinor?: Nullable<number>;
+    priceUnit?: Nullable<string>;
     url: string;
 };
 declare function buildService(input: ServiceInput, ids: GraphIds): Record<string, unknown>;
@@ -198,12 +199,12 @@ declare function buildItemList(items: {
 type ArticleInput = {
     slug: string;
     headline: string;
-    description?: string;
-    datePublished?: string;
-    dateModified?: string;
-    imageUrl?: string;
+    description?: Nullable<string>;
+    datePublished?: Nullable<string>;
+    dateModified?: Nullable<string>;
+    imageUrl?: Nullable<string>;
     /** slug of a Person node elsewhere in the same graph (see buildPerson). */
-    authorSlug?: string;
+    authorSlug?: Nullable<string>;
     speakable?: {
         cssSelector: string[];
     };

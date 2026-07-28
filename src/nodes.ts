@@ -9,26 +9,33 @@ import type { GraphIds } from "./ids";
 // mapping (e.g. "salon" -> ['BeautySalon', 'HealthAndBeautyBusiness',
 // 'LocalBusiness']), CMS-shape adapters, and env-gated fields like
 // aggregateRating provenance stay in the consuming site, not here.
+//
+// Optional string-ish fields accept `| null` as well as `| undefined`:
+// Sanity (and most headless CMSes) return unset fields as `null`, not
+// `undefined`, so requiring `undefined` here would force every consumer to
+// coerce at the call site. Falsy checks in the builders below (`if
+// (input.x)`) already treat both the same at runtime.
+type Nullable<T> = T | null | undefined;
 
 export type OrganizationInput = {
   name: string;
-  legalName?: string;
+  legalName?: Nullable<string>;
   description: string;
   url: string;
-  phone?: string;
-  email?: string;
+  phone?: Nullable<string>;
+  email?: Nullable<string>;
   /** A brand mark image. Distinct from `image` (general photography). */
-  logoUrl?: string;
+  logoUrl?: Nullable<string>;
   image?: string[];
   address?: {
-    streetAddress?: string;
-    locality?: string;
-    region?: string;
-    postalCode?: string;
-    country?: string;
-  };
-  geo?: { latitude: string; longitude: string };
-  priceRange?: string;
+    streetAddress?: Nullable<string>;
+    locality?: Nullable<string>;
+    region?: Nullable<string>;
+    postalCode?: Nullable<string>;
+    country?: Nullable<string>;
+  } | null;
+  geo?: { latitude: string; longitude: string } | null;
+  priceRange?: Nullable<string>;
   /** Pre-shaped schema.org rows: one entry per group of days sharing hours.
    * Adapt your CMS's per-day shape to this before calling. */
   openingHoursSpecification?: Array<{ dayOfWeek: string[]; opens: string; closes: string }>;
@@ -40,7 +47,7 @@ export type OrganizationInput = {
   hasOfferCatalog?: Record<string, unknown>;
   /** @id ref to a Person node -- the founder/owner, if the business has one
    * canonical figurehead worth naming on the Organization itself. */
-  founderId?: string;
+  founderId?: Nullable<string>;
 };
 
 export function buildOrganization(
@@ -112,10 +119,10 @@ export function buildSpine(
 export type PersonInput = {
   name: string;
   slug: string;
-  jobTitle?: string;
-  description?: string;
-  imageUrl?: string;
-  credentials?: Array<{ label: string; number?: string | null; url?: string | null }>;
+  jobTitle?: Nullable<string>;
+  description?: Nullable<string>;
+  imageUrl?: Nullable<string>;
+  credentials?: Array<{ label: string; number?: Nullable<string>; url?: Nullable<string> }>;
 };
 
 export function buildPerson(input: PersonInput, ids: GraphIds) {
@@ -144,13 +151,13 @@ export function buildPerson(input: PersonInput, ids: GraphIds) {
 export type PlaceInput = {
   name: string;
   slug: string;
-  description?: string;
-  postcodeArea?: string;
-  postcodes?: string[];
+  description?: Nullable<string>;
+  postcodeArea?: Nullable<string>;
+  postcodes?: Nullable<string[]>;
   /** County/region name, expressed as a nested AdministrativeArea literal on
    * this Place -- not a second, unlinked areaServed entry. Use when there's
    * no separate document/entity for the county itself. */
-  county?: string;
+  county?: Nullable<string>;
 };
 
 export function buildPlace(input: PlaceInput, ids: GraphIds) {
@@ -182,10 +189,10 @@ export function buildPlace(input: PlaceInput, ids: GraphIds) {
 export type ServiceInput = {
   name: string;
   slug: string;
-  description?: string;
-  serviceType?: string;
-  priceFromMinor?: number | null;
-  priceUnit?: string | null;
+  description?: Nullable<string>;
+  serviceType?: Nullable<string>;
+  priceFromMinor?: Nullable<number>;
+  priceUnit?: Nullable<string>;
   url: string;
 };
 
@@ -278,12 +285,12 @@ export function buildItemList(items: { name: string; url: string }[]) {
 export type ArticleInput = {
   slug: string;
   headline: string;
-  description?: string;
-  datePublished?: string;
-  dateModified?: string;
-  imageUrl?: string;
+  description?: Nullable<string>;
+  datePublished?: Nullable<string>;
+  dateModified?: Nullable<string>;
+  imageUrl?: Nullable<string>;
   /** slug of a Person node elsewhere in the same graph (see buildPerson). */
-  authorSlug?: string;
+  authorSlug?: Nullable<string>;
   speakable?: { cssSelector: string[] };
 };
 
