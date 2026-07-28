@@ -25,6 +25,9 @@ declare function createGraphIds(siteUrl: string): {
     place: (slug: string) => string;
     article: (slug: string) => string;
     breadcrumb: (path: string) => string;
+    /** Page-identity nodes (WebPage/ContactPage/CollectionPage) are inherently
+     * page-scoped, same reasoning as `breadcrumb`. */
+    webpage: (path: string) => string;
 };
 type GraphIds = ReturnType<typeof createGraphIds>;
 
@@ -89,6 +92,11 @@ type OrganizationInput = {
     /** @id ref to a Person node -- the founder/owner, if the business has one
      * canonical figurehead worth naming on the Organization itself. */
     founderId?: Nullable<string>;
+    contactPoint?: Array<{
+        contactType: string;
+        email?: Nullable<string>;
+        telephone?: Nullable<string>;
+    }>;
 };
 declare function buildOrganization(input: OrganizationInput, ids: GraphIds, types?: string | string[]): Record<string, unknown>;
 declare function buildWebsite(input: {
@@ -210,7 +218,58 @@ type ArticleInput = {
     };
 };
 declare function buildArticle(input: ArticleInput, ids: GraphIds): Record<string, unknown>;
+/** Generic per-page identity node. One per page, linked to the sitewide
+ * WebSite and Organization by @id rather than a page re-declaring either. */
+type WebPageInput = {
+    path: string;
+    url: string;
+    name: string;
+    description?: Nullable<string>;
+    dateModified?: Nullable<string>;
+    inLanguage?: Nullable<string>;
+};
+declare function buildWebPage(input: WebPageInput, ids: GraphIds): Record<string, unknown>;
+type ContactPageInput = {
+    path: string;
+    url: string;
+    name: string;
+};
+/** `mainEntity` references the sitewide Organization by @id -- see
+ * `OrganizationInput.contactPoint` for the actual contact-point data, rather
+ * than re-declaring a second, disconnected Organization literal here. */
+declare function buildContactPage(input: ContactPageInput, ids: GraphIds): {
+    "@type": string;
+    "@id": string;
+    url: string;
+    name: string;
+    isPartOf: {
+        "@id": string;
+    };
+    mainEntity: {
+        "@id": string;
+    };
+};
+type CollectionPageInput = {
+    path: string;
+    url: string;
+    name: string;
+    items: Array<{
+        name: string;
+        url: string;
+    }>;
+    inLanguage?: Nullable<string>;
+};
+declare function buildCollectionPage(input: CollectionPageInput, ids: GraphIds): Record<string, unknown>;
+type ReviewInput = {
+    authorName: string;
+    reviewBody: string;
+    ratingValue?: number | null;
+    url?: Nullable<string>;
+};
+/** `itemReviewed` references the sitewide Organization by @id. No `@id` of
+ * its own -- nothing else in the graph needs to reference a testimonial. */
+declare function buildReview(input: ReviewInput, ids: GraphIds): Record<string, unknown>;
 
 declare function escapeJsonLdForScript(json: string): string;
 
-export { type ArticleInput, type BreadcrumbItem, type FAQInput, type GraphIds, type JsonLdGraph, type JsonLdNode, type OrganizationInput, type PersonInput, type PlaceInput, type ServiceInput, buildArticle, buildBreadcrumbs, buildFAQPage, buildGraph, buildItemList, buildOfferCatalog, buildOrganization, buildPerson, buildPlace, buildService, buildSpine, buildWebsite, createGraphIds, escapeJsonLdForScript, findGraphIssues };
+export { type ArticleInput, type BreadcrumbItem, type CollectionPageInput, type ContactPageInput, type FAQInput, type GraphIds, type JsonLdGraph, type JsonLdNode, type OrganizationInput, type PersonInput, type PlaceInput, type ReviewInput, type ServiceInput, type WebPageInput, buildArticle, buildBreadcrumbs, buildCollectionPage, buildContactPage, buildFAQPage, buildGraph, buildItemList, buildOfferCatalog, buildOrganization, buildPerson, buildPlace, buildReview, buildService, buildSpine, buildWebPage, buildWebsite, createGraphIds, escapeJsonLdForScript, findGraphIssues };

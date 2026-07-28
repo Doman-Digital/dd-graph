@@ -4,12 +4,16 @@ import { buildGraph, findGraphIssues } from "../graph";
 import {
   buildArticle,
   buildBreadcrumbs,
+  buildCollectionPage,
+  buildContactPage,
   buildOfferCatalog,
   buildOrganization,
   buildPerson,
   buildPlace,
+  buildReview,
   buildService,
   buildSpine,
+  buildWebPage,
 } from "../nodes";
 
 const SITE_URL = "https://example-electrician.co.uk";
@@ -161,5 +165,104 @@ describe("buildArticle", () => {
     expect(article.publisher).toEqual({ "@id": ids.org });
     expect(article.isPartOf).toEqual({ "@id": ids.website });
     expect(article.author).toEqual({ "@id": ids.person("founder") });
+  });
+});
+
+describe("buildWebPage", () => {
+  it("references isPartOf/about by @id and uses the page-scoped webpage id", () => {
+    const ids = createGraphIds(SITE_URL);
+    const page = buildWebPage({ path: "/about", url: `${SITE_URL}/about`, name: "About" }, ids);
+
+    expect(page["@id"]).toBe(ids.webpage("/about"));
+    expect(page.isPartOf).toEqual({ "@id": ids.website });
+    expect(page.about).toEqual({ "@id": ids.org });
+  });
+});
+
+describe("buildContactPage", () => {
+  it("references the sitewide Organization via mainEntity instead of a second literal", () => {
+    const ids = createGraphIds(SITE_URL);
+    const page = buildContactPage({ path: "/contact", url: `${SITE_URL}/contact`, name: "Contact" }, ids);
+
+    expect(page.mainEntity).toEqual({ "@id": ids.org });
+    expect(page["@id"]).toBe(ids.webpage("/contact"));
+  });
+});
+
+describe("buildCollectionPage", () => {
+  it("builds mainEntity as an ItemList and references isPartOf/about by @id", () => {
+    const ids = createGraphIds(SITE_URL);
+    const page = buildCollectionPage(
+      {
+        path: "/resources",
+        url: `${SITE_URL}/resources`,
+        name: "Resources",
+        items: [{ name: "Guide", url: `${SITE_URL}/resources/guide` }],
+      },
+      ids,
+    );
+
+    expect(page.isPartOf).toEqual({ "@id": ids.website });
+    expect(page.about).toEqual({ "@id": ids.org });
+    expect(page.mainEntity).toEqual({
+      "@type": "ItemList",
+      itemListElement: [{ "@type": "ListItem", position: 1, name: "Guide", url: `${SITE_URL}/resources/guide` }],
+    });
+  });
+});
+
+describe("buildReview", () => {
+  it("references itemReviewed by @id and omits reviewRating when no rating is given", () => {
+    const ids = createGraphIds(SITE_URL);
+    const review = buildReview({ authorName: "Jane", reviewBody: "Great service." }, ids);
+
+    expect(review.itemReviewed).toEqual({ "@id": ids.org });
+    expect(review.reviewRating).toBeUndefined();
+  });
+
+  it("includes reviewRating when a valid 1-5 rating is given", () => {
+    const ids = createGraphIds(SITE_URL);
+    const review = buildReview({ authorName: "Jane", reviewBody: "Great service.", ratingValue: 5 }, ids);
+
+    expect(review.reviewRating).toEqual({ "@type": "Rating", ratingValue: 5, bestRating: 5, worstRating: 1 });
+  });
+});
+
+describe("buildOrganization contactPoint", () => {
+  it("emits ContactPoint nodes only when provided", () => {
+    const ids = createGraphIds(SITE_URL);
+    const withContact = buildOrganization(
+      { ...ORG_INPUT, contactPoint: [{ contactType: "customer support", email: "hi@example.com" }] },
+      ids,
+    );
+    const withoutContact = buildOrganization(ORG_INPUT, ids);
+
+    expect(withContact.contactPoint).toEqual([
+      { "@type": "ContactPoint", contactType: "customer support", email: "hi@example.com" },
+    ]);
+    expect(withoutContact.contactPoint).toBeUndefined();
+  });
+});
+
+describe("findGraphIssues -- new node kinds", () => {
+  it("is clean for a spine + WebPage + ContactPage + CollectionPage + Review graph", () => {
+    const ids = createGraphIds(SITE_URL);
+    const graph = buildGraph([
+      ...buildSpine(ORG_INPUT, WEBSITE_INPUT, ids),
+      buildWebPage({ path: "/about", url: `${SITE_URL}/about`, name: "About" }, ids),
+      buildContactPage({ path: "/contact", url: `${SITE_URL}/contact`, name: "Contact" }, ids),
+      buildCollectionPage(
+        {
+          path: "/resources",
+          url: `${SITE_URL}/resources`,
+          name: "Resources",
+          items: [{ name: "Guide", url: `${SITE_URL}/resources/guide` }],
+        },
+        ids,
+      ),
+      buildReview({ authorName: "Jane", reviewBody: "Great service.", ratingValue: 5 }, ids),
+    ]);
+
+    expect(findGraphIssues(graph)).toEqual([]);
   });
 });

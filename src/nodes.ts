@@ -48,6 +48,11 @@ export type OrganizationInput = {
   /** @id ref to a Person node -- the founder/owner, if the business has one
    * canonical figurehead worth naming on the Organization itself. */
   founderId?: Nullable<string>;
+  contactPoint?: Array<{
+    contactType: string;
+    email?: Nullable<string>;
+    telephone?: Nullable<string>;
+  }>;
 };
 
 export function buildOrganization(
@@ -90,6 +95,9 @@ export function buildOrganization(
   }
   if (input.hasOfferCatalog) node.hasOfferCatalog = input.hasOfferCatalog;
   if (input.founderId) node.founder = { "@id": input.founderId };
+  if (input.contactPoint && input.contactPoint.length > 0) {
+    node.contactPoint = input.contactPoint.map((c) => ({ "@type": "ContactPoint", ...c }));
+  }
   return node;
 }
 
@@ -310,5 +318,97 @@ export function buildArticle(input: ArticleInput, ids: GraphIds) {
   if (input.speakable) {
     node.speakable = { "@type": "SpeakableSpecification", cssSelector: input.speakable.cssSelector };
   }
+  return node;
+}
+
+/** Generic per-page identity node. One per page, linked to the sitewide
+ * WebSite and Organization by @id rather than a page re-declaring either. */
+export type WebPageInput = {
+  path: string;
+  url: string;
+  name: string;
+  description?: Nullable<string>;
+  dateModified?: Nullable<string>;
+  inLanguage?: Nullable<string>;
+};
+
+export function buildWebPage(input: WebPageInput, ids: GraphIds) {
+  const node: Record<string, unknown> = {
+    "@type": "WebPage",
+    "@id": ids.webpage(input.path),
+    url: input.url,
+    name: input.name,
+    isPartOf: { "@id": ids.website },
+    about: { "@id": ids.org },
+  };
+  if (input.description) node.description = input.description;
+  if (input.dateModified) node.dateModified = input.dateModified;
+  if (input.inLanguage) node.inLanguage = input.inLanguage;
+  return node;
+}
+
+export type ContactPageInput = { path: string; url: string; name: string };
+
+/** `mainEntity` references the sitewide Organization by @id -- see
+ * `OrganizationInput.contactPoint` for the actual contact-point data, rather
+ * than re-declaring a second, disconnected Organization literal here. */
+export function buildContactPage(input: ContactPageInput, ids: GraphIds) {
+  return {
+    "@type": "ContactPage",
+    "@id": ids.webpage(input.path),
+    url: input.url,
+    name: input.name,
+    isPartOf: { "@id": ids.website },
+    mainEntity: { "@id": ids.org },
+  };
+}
+
+export type CollectionPageInput = {
+  path: string;
+  url: string;
+  name: string;
+  items: Array<{ name: string; url: string }>;
+  inLanguage?: Nullable<string>;
+};
+
+export function buildCollectionPage(input: CollectionPageInput, ids: GraphIds) {
+  const node: Record<string, unknown> = {
+    "@type": "CollectionPage",
+    "@id": ids.webpage(input.path),
+    url: input.url,
+    name: input.name,
+    isPartOf: { "@id": ids.website },
+    about: { "@id": ids.org },
+    mainEntity: buildItemList(input.items),
+  };
+  if (input.inLanguage) node.inLanguage = input.inLanguage;
+  return node;
+}
+
+export type ReviewInput = {
+  authorName: string;
+  reviewBody: string;
+  ratingValue?: number | null;
+  url?: Nullable<string>;
+};
+
+/** `itemReviewed` references the sitewide Organization by @id. No `@id` of
+ * its own -- nothing else in the graph needs to reference a testimonial. */
+export function buildReview(input: ReviewInput, ids: GraphIds) {
+  const node: Record<string, unknown> = {
+    "@type": "Review",
+    itemReviewed: { "@id": ids.org },
+    author: { "@type": "Person", name: input.authorName },
+    reviewBody: input.reviewBody,
+  };
+  if (typeof input.ratingValue === "number" && input.ratingValue >= 1 && input.ratingValue <= 5) {
+    node.reviewRating = {
+      "@type": "Rating",
+      ratingValue: input.ratingValue,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
+  if (input.url) node.url = input.url;
   return node;
 }

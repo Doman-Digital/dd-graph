@@ -27,6 +27,9 @@ export function createGraphIds(siteUrl: string) {
     place: (slug: string) => `${url}/#place-${slug}`,
     article: (slug: string) => `${url}/#article-${slug}`,
     breadcrumb: (path: string) => `${url}${path}#breadcrumb`,
+    /** Page-identity nodes (WebPage/ContactPage/CollectionPage) are inherently
+     * page-scoped, same reasoning as `breadcrumb`. */
+    webpage: (path: string) => `${url}${path}#webpage`,
   };
 }
 

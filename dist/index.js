@@ -8,7 +8,10 @@ function createGraphIds(siteUrl) {
     service: (slug) => `${url}/#service-${slug}`,
     place: (slug) => `${url}/#place-${slug}`,
     article: (slug) => `${url}/#article-${slug}`,
-    breadcrumb: (path) => `${url}${path}#breadcrumb`
+    breadcrumb: (path) => `${url}${path}#breadcrumb`,
+    /** Page-identity nodes (WebPage/ContactPage/CollectionPage) are inherently
+     * page-scoped, same reasoning as `breadcrumb`. */
+    webpage: (path) => `${url}${path}#webpage`
   };
 }
 
@@ -95,6 +98,9 @@ function buildOrganization(input, ids, types = "LocalBusiness") {
   }
   if (input.hasOfferCatalog) node.hasOfferCatalog = input.hasOfferCatalog;
   if (input.founderId) node.founder = { "@id": input.founderId };
+  if (input.contactPoint && input.contactPoint.length > 0) {
+    node.contactPoint = input.contactPoint.map((c) => ({ "@type": "ContactPoint", ...c }));
+  }
   return node;
 }
 function buildWebsite(input, ids) {
@@ -245,6 +251,61 @@ function buildArticle(input, ids) {
   }
   return node;
 }
+function buildWebPage(input, ids) {
+  const node = {
+    "@type": "WebPage",
+    "@id": ids.webpage(input.path),
+    url: input.url,
+    name: input.name,
+    isPartOf: { "@id": ids.website },
+    about: { "@id": ids.org }
+  };
+  if (input.description) node.description = input.description;
+  if (input.dateModified) node.dateModified = input.dateModified;
+  if (input.inLanguage) node.inLanguage = input.inLanguage;
+  return node;
+}
+function buildContactPage(input, ids) {
+  return {
+    "@type": "ContactPage",
+    "@id": ids.webpage(input.path),
+    url: input.url,
+    name: input.name,
+    isPartOf: { "@id": ids.website },
+    mainEntity: { "@id": ids.org }
+  };
+}
+function buildCollectionPage(input, ids) {
+  const node = {
+    "@type": "CollectionPage",
+    "@id": ids.webpage(input.path),
+    url: input.url,
+    name: input.name,
+    isPartOf: { "@id": ids.website },
+    about: { "@id": ids.org },
+    mainEntity: buildItemList(input.items)
+  };
+  if (input.inLanguage) node.inLanguage = input.inLanguage;
+  return node;
+}
+function buildReview(input, ids) {
+  const node = {
+    "@type": "Review",
+    itemReviewed: { "@id": ids.org },
+    author: { "@type": "Person", name: input.authorName },
+    reviewBody: input.reviewBody
+  };
+  if (typeof input.ratingValue === "number" && input.ratingValue >= 1 && input.ratingValue <= 5) {
+    node.reviewRating = {
+      "@type": "Rating",
+      ratingValue: input.ratingValue,
+      bestRating: 5,
+      worstRating: 1
+    };
+  }
+  if (input.url) node.url = input.url;
+  return node;
+}
 
 // src/escape.ts
 var LINE_SEPARATOR = String.fromCharCode(8232);
@@ -255,6 +316,8 @@ function escapeJsonLdForScript(json) {
 export {
   buildArticle,
   buildBreadcrumbs,
+  buildCollectionPage,
+  buildContactPage,
   buildFAQPage,
   buildGraph,
   buildItemList,
@@ -262,8 +325,10 @@ export {
   buildOrganization,
   buildPerson,
   buildPlace,
+  buildReview,
   buildService,
   buildSpine,
+  buildWebPage,
   buildWebsite,
   createGraphIds,
   escapeJsonLdForScript,
