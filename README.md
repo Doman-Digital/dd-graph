@@ -31,7 +31,7 @@ Not published to npm. Consumed as a git dependency pinned to a tag:
 ```json
 {
   "dependencies": {
-    "@domandigital/graph": "github:Doman-Digital/dd-graph#v0.1.0"
+    "@domandigital/graph": "github:Doman-Digital/dd-graph#v0.1.1"
   }
 }
 ```
@@ -39,6 +39,31 @@ Not published to npm. Consumed as a git dependency pinned to a tag:
 `dist/` is committed to this repo (no CI build step runs on a git-dependency
 install), so no build step is required in the consuming project beyond a
 normal `pnpm install`.
+
+### Known gotcha: Vitest + pnpm git dependencies
+
+If a consuming project uses Vitest and a test imports a real value (not just
+a type) from this package, add `resolve.preserveSymlinks: true` to
+`vitest.config.ts`:
+
+```ts
+export default defineConfig({
+  resolve: { preserveSymlinks: true },
+  // ...
+});
+```
+
+Why: pnpm names this package's virtual-store folder with the git commit
+after a literal `#` (`@domandigital+graph@git+https+++...#<commit>`).
+Vite/vite-node's realpath-to-file-URL resolution treats that `#` as a URL
+fragment delimiter and truncates the path there, so it can never find the
+module -- even though plain Node ESM and Next's own webpack/Turbopack
+bundler resolve the same package fine. `preserveSymlinks` stops Vite from
+ever following the `node_modules/@domandigital/graph` symlink into that
+`#`-containing real path. Both `dd-templates` and `RMP-Electrical` hit this;
+RMP's tests import `createGraphIds` directly and needed the fix, while
+dd-templates' tests currently only import types (erased at compile time) so
+it didn't surface there -- but the fix is in both configs regardless.
 
 ## Usage
 
