@@ -125,11 +125,21 @@ function buildPerson(input, ids) {
   if (input.jobTitle) node.jobTitle = input.jobTitle;
   if (input.description) node.description = input.description;
   if (input.imageUrl) node.image = input.imageUrl;
+  if (input.sameAs && input.sameAs.length > 0) node.sameAs = input.sameAs;
   if (input.credentials && input.credentials.length > 0) {
     node.identifier = input.credentials.filter((c) => c.number).map((c) => ({
       "@type": "PropertyValue",
       propertyID: c.label,
       value: c.number,
+      ...c.url ? { url: c.url } : {}
+    }));
+  }
+  if (input.hasCredential && input.hasCredential.length > 0) {
+    node.hasCredential = input.hasCredential.map((c) => ({
+      "@type": "EducationalOccupationalCredential",
+      credentialCategory: c.category,
+      name: c.name,
+      ...c.identifier ? { identifier: c.identifier } : {},
       ...c.url ? { url: c.url } : {}
     }));
   }

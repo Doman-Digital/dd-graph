@@ -130,7 +130,18 @@ export type PersonInput = {
   jobTitle?: Nullable<string>;
   description?: Nullable<string>;
   imageUrl?: Nullable<string>;
+  sameAs?: string[];
   credentials?: Array<{ label: string; number?: Nullable<string>; url?: Nullable<string> }>;
+  /** Professional credentials as `EducationalOccupationalCredential` -- the
+   * correct schema.org shape for a regulator registration, professional-body
+   * membership, or qualification (distinct from `credentials` above, which
+   * emits the weaker generic `identifier`/`PropertyValue` shape). */
+  hasCredential?: Array<{
+    category: string;
+    name: string;
+    identifier?: Nullable<string>;
+    url?: Nullable<string>;
+  }>;
 };
 
 export function buildPerson(input: PersonInput, ids: GraphIds) {
@@ -143,6 +154,7 @@ export function buildPerson(input: PersonInput, ids: GraphIds) {
   if (input.jobTitle) node.jobTitle = input.jobTitle;
   if (input.description) node.description = input.description;
   if (input.imageUrl) node.image = input.imageUrl;
+  if (input.sameAs && input.sameAs.length > 0) node.sameAs = input.sameAs;
   if (input.credentials && input.credentials.length > 0) {
     node.identifier = input.credentials
       .filter((c) => c.number)
@@ -152,6 +164,15 @@ export function buildPerson(input: PersonInput, ids: GraphIds) {
         value: c.number,
         ...(c.url ? { url: c.url } : {}),
       }));
+  }
+  if (input.hasCredential && input.hasCredential.length > 0) {
+    node.hasCredential = input.hasCredential.map((c) => ({
+      "@type": "EducationalOccupationalCredential",
+      credentialCategory: c.category,
+      name: c.name,
+      ...(c.identifier ? { identifier: c.identifier } : {}),
+      ...(c.url ? { url: c.url } : {}),
+    }));
   }
   return node;
 }

@@ -144,6 +144,32 @@ describe("buildService", () => {
   });
 });
 
+describe("buildPerson", () => {
+  it("emits sameAs and hasCredential as EducationalOccupationalCredential, distinct from identifier", () => {
+    const ids = createGraphIds(SITE_URL);
+    const person = buildPerson(
+      {
+        name: "Jane Doe",
+        slug: "jane",
+        sameAs: ["https://register.example/jane"],
+        hasCredential: [{ category: "Professional regulator", name: "HCPC registration", identifier: "OT12345" }],
+      },
+      ids,
+    );
+
+    expect(person.sameAs).toEqual(["https://register.example/jane"]);
+    expect(person.hasCredential).toEqual([
+      {
+        "@type": "EducationalOccupationalCredential",
+        credentialCategory: "Professional regulator",
+        name: "HCPC registration",
+        identifier: "OT12345",
+      },
+    ]);
+    expect(person.identifier).toBeUndefined();
+  });
+});
+
 describe("buildPlace", () => {
   it("expresses a county as containedInPlace, not a second disconnected areaServed entry", () => {
     const ids = createGraphIds(SITE_URL);

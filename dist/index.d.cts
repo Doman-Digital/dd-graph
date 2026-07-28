@@ -125,9 +125,20 @@ type PersonInput = {
     jobTitle?: Nullable<string>;
     description?: Nullable<string>;
     imageUrl?: Nullable<string>;
+    sameAs?: string[];
     credentials?: Array<{
         label: string;
         number?: Nullable<string>;
+        url?: Nullable<string>;
+    }>;
+    /** Professional credentials as `EducationalOccupationalCredential` -- the
+     * correct schema.org shape for a regulator registration, professional-body
+     * membership, or qualification (distinct from `credentials` above, which
+     * emits the weaker generic `identifier`/`PropertyValue` shape). */
+    hasCredential?: Array<{
+        category: string;
+        name: string;
+        identifier?: Nullable<string>;
         url?: Nullable<string>;
     }>;
 };
