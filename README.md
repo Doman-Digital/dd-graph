@@ -6,6 +6,11 @@ WebSite, Person, Place, Service, Article, FAQPage, BreadcrumbList, ItemList,
 OfferCatalog), and a validator that catches unresolved `@id` references and
 duplicate `@id`s before they ship.
 
+**Read [PRINCIPLES.md](PRINCIPLES.md) before wiring this into a new repo or
+extending it.** This README is the API reference; PRINCIPLES.md is the
+long-term contract that keeps the portfolio from drifting back into
+disconnected schema islands.
+
 ## Why this exists
 
 Across the portfolio, structured data was reimplemented per repo. The
