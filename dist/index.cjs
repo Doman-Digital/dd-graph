@@ -134,6 +134,7 @@ function buildOrganization(input, ids, types = "LocalBusiness") {
     node.areaServed = input.areaServedIds.map((id) => ({ "@id": id }));
   }
   if (input.sameAs && input.sameAs.length > 0) node.sameAs = input.sameAs;
+  if (input.foundingDate) node.foundingDate = input.foundingDate;
   if (input.aggregateRating) {
     node.aggregateRating = {
       "@type": "AggregateRating",

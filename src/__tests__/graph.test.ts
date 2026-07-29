@@ -181,6 +181,35 @@ describe("buildOrganization openingHours", () => {
   });
 });
 
+describe("buildOrganization foundingDate", () => {
+  it("emits foundingDate only when provided", () => {
+    const ids = createGraphIds(SITE_URL);
+    const withDate = buildOrganization({ ...ORG_INPUT, foundingDate: "2018" }, ids);
+    const withoutDate = buildOrganization(ORG_INPUT, ids);
+
+    expect(withDate.foundingDate).toBe("2018");
+    expect(withoutDate.foundingDate).toBeUndefined();
+  });
+});
+
+describe("buildOrganization aggregateRating", () => {
+  it("preserves a string-typed rating verbatim, not coerced to a number", () => {
+    const ids = createGraphIds(SITE_URL);
+    const node = buildOrganization(
+      { ...ORG_INPUT, aggregateRating: { ratingValue: "5.0", reviewCount: "411" } },
+      ids,
+    );
+
+    expect(node.aggregateRating).toEqual({
+      "@type": "AggregateRating",
+      bestRating: 5,
+      worstRating: 1,
+      ratingValue: "5.0",
+      reviewCount: "411",
+    });
+  });
+});
+
 describe("buildPerson", () => {
   it("emits sameAs and hasCredential as EducationalOccupationalCredential, distinct from identifier", () => {
     const ids = createGraphIds(SITE_URL);

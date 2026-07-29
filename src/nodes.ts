@@ -51,7 +51,13 @@ export type OrganizationInput = {
   /** @id refs to Place nodes elsewhere in the same graph. */
   areaServedIds?: string[];
   sameAs?: string[];
-  aggregateRating?: { ratingValue: number; reviewCount: number } | null;
+  /** Year (or full date) the business was founded, e.g. "2018". */
+  foundingDate?: Nullable<string>;
+  /** `number` for a computed/live value; `string` to preserve a source
+   * literal's exact representation verbatim (e.g. a CMS or hand-written
+   * value already typed as "5.0"/"411") rather than silently reformatting
+   * it through JS number coercion. */
+  aggregateRating?: { ratingValue: number | string; reviewCount: number | string } | null;
   /** Pre-built OfferCatalog (see buildOfferCatalog), passed through as-is. */
   hasOfferCatalog?: Record<string, unknown>;
   /** @id ref to a Person node -- the founder/owner, if the business has one
@@ -100,6 +106,7 @@ export function buildOrganization(
     node.areaServed = input.areaServedIds.map((id) => ({ "@id": id }));
   }
   if (input.sameAs && input.sameAs.length > 0) node.sameAs = input.sameAs;
+  if (input.foundingDate) node.foundingDate = input.foundingDate;
   if (input.aggregateRating) {
     node.aggregateRating = {
       "@type": "AggregateRating",
