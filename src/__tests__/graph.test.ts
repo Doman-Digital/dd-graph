@@ -262,6 +262,14 @@ describe("buildPerson", () => {
     ]);
     expect(person.identifier).toBeUndefined();
   });
+
+  it("passes hasOfferCatalog through as-is, for an independent practitioner's own services", () => {
+    const ids = createGraphIds(SITE_URL);
+    const catalog = { "@type": "OfferCatalog", name: "Jane's services", itemListElement: [] };
+    const person = buildPerson({ name: "Jane Doe", slug: "jane", hasOfferCatalog: catalog }, ids);
+
+    expect(person.hasOfferCatalog).toBe(catalog);
+  });
 });
 
 describe("buildPlace", () => {

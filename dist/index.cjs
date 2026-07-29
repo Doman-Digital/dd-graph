@@ -207,6 +207,7 @@ function buildPerson(input, ids) {
       ...c.url ? { url: c.url } : {}
     }));
   }
+  if (input.hasOfferCatalog) node.hasOfferCatalog = input.hasOfferCatalog;
   return node;
 }
 function buildPlace(input, ids) {

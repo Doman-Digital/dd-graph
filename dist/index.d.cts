@@ -165,6 +165,10 @@ type PersonInput = {
         identifier?: Nullable<string>;
         url?: Nullable<string>;
     }>;
+    /** Pre-built OfferCatalog (see buildOfferCatalog), passed through as-is --
+     * for an independent practitioner whose own services are worth listing on
+     * their Person node, distinct from the Organization they work for. */
+    hasOfferCatalog?: Record<string, unknown>;
 };
 declare function buildPerson(input: PersonInput, ids: GraphIds): Record<string, unknown>;
 type PlaceInput = {
