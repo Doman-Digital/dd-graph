@@ -143,6 +143,10 @@ type WebsiteInput = {
     name: string;
     url: string;
     description?: Nullable<string>;
+    /** BCP 47 tag (e.g. "en-GB") -- schema.org's WebSite.inLanguage. Already
+     * present on WebPageInput/CollectionPageInput; WebsiteInput was the one
+     * page-identity-adjacent builder missing it. */
+    inLanguage?: Nullable<string>;
     /** e.g. a booking ReserveAction or a site SearchAction -- schema.org's
      * generic WebSite.potentialAction shape, parameterized by @type so this
      * one field covers any of them rather than adding a new field per
@@ -351,6 +355,11 @@ type ProductInput = {
          * alongside the flat Offer price when set. */
         unitText?: Nullable<string>;
         availability?: Nullable<string>;
+        /** @id ref to the Organization node selling this product -- without
+         * this, consumers fall back to a disconnected `{'@type':
+         * 'Organization', name: ...}` literal, the exact "island" bug this
+         * package exists to fix. */
+        sellerId?: Nullable<string>;
     } | null;
     /** `number` for a computed/live value; `string` to preserve a source
      * literal's exact representation verbatim (see Organization's

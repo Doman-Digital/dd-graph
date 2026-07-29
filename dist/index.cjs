@@ -188,6 +188,7 @@ function buildWebsite(input, ids) {
     publisher: { "@id": ids.org }
   };
   if (input.description) node.description = input.description;
+  if (input.inLanguage) node.inLanguage = input.inLanguage;
   if (input.potentialAction) {
     node.potentialAction = {
       "@type": input.potentialAction.type,
@@ -435,6 +436,7 @@ function buildProduct(input, ids) {
         unitText: input.offers.unitText
       };
     }
+    if (input.offers.sellerId) offer.seller = { "@id": input.offers.sellerId };
     node.offers = offer;
   }
   if (input.aggregateRating) {

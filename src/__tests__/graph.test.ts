@@ -463,6 +463,31 @@ describe("buildProduct", () => {
 
     expect(product["@id"]).toBe(ids.product("huracan-london"));
   });
+
+  it("emits offers.seller as an @id ref when sellerId is given, omits it otherwise", () => {
+    const ids = createGraphIds(SITE_URL);
+    const withSeller = buildProduct(
+      {
+        slug: "the-journal",
+        name: "The Self-Love Journal",
+        url: `${SITE_URL}/journal`,
+        offers: { price: "32", priceCurrency: "GBP", sellerId: ids.org },
+      },
+      ids,
+    );
+    const withoutSeller = buildProduct(
+      {
+        slug: "the-journal",
+        name: "The Self-Love Journal",
+        url: `${SITE_URL}/journal`,
+        offers: { price: "32", priceCurrency: "GBP" },
+      },
+      ids,
+    );
+
+    expect(withSeller.offers).toMatchObject({ seller: { "@id": ids.org } });
+    expect((withoutSeller.offers as Record<string, unknown>).seller).toBeUndefined();
+  });
 });
 
 describe("buildOrganization areaServed", () => {
@@ -551,6 +576,17 @@ describe("buildWebsite potentialAction", () => {
     const website = buildWebsite({ name: "Acme", url: SITE_URL }, ids);
 
     expect(website.potentialAction).toBeUndefined();
+  });
+});
+
+describe("buildWebsite inLanguage", () => {
+  it("emits inLanguage only when provided", () => {
+    const ids = createGraphIds(SITE_URL);
+    const withLang = buildWebsite({ name: "Acme", url: SITE_URL, inLanguage: "en-GB" }, ids);
+    const withoutLang = buildWebsite({ name: "Acme", url: SITE_URL }, ids);
+
+    expect(withLang.inLanguage).toBe("en-GB");
+    expect(withoutLang.inLanguage).toBeUndefined();
   });
 });
 
