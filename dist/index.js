@@ -361,6 +361,16 @@ function buildReview(input, ids) {
     };
   }
   if (input.url) node.url = input.url;
+  if (input.datePublished) node.datePublished = input.datePublished;
+  if (input.reply?.text) {
+    const comment = {
+      "@type": "Comment",
+      text: input.reply.text,
+      author: { "@id": ids.org }
+    };
+    if (input.reply.dateCreated) comment.dateCreated = input.reply.dateCreated;
+    node.comment = comment;
+  }
   return node;
 }
 function buildProduct(input, ids) {

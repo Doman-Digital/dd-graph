@@ -380,6 +380,44 @@ describe("buildReview", () => {
 
     expect(review.reviewRating).toEqual({ "@type": "Rating", ratingValue: 5, bestRating: 5, worstRating: 1 });
   });
+
+  it("omits comment when no reply is given", () => {
+    const ids = createGraphIds(SITE_URL);
+    const review = buildReview({ authorName: "Jane", reviewBody: "Great service." }, ids);
+
+    expect(review.comment).toBeUndefined();
+  });
+
+  it("maps a reply to a Comment attributed to the Organization by @id, not a nested literal", () => {
+    const ids = createGraphIds(SITE_URL);
+    const review = buildReview(
+      {
+        authorName: "Jane",
+        reviewBody: "Great service.",
+        datePublished: "2026-06-08",
+        reply: { text: "Thanks Jane!", dateCreated: "2026-06-09" },
+      },
+      ids,
+    );
+
+    expect(review.datePublished).toBe("2026-06-08");
+    expect(review.comment).toEqual({
+      "@type": "Comment",
+      text: "Thanks Jane!",
+      author: { "@id": ids.org },
+      dateCreated: "2026-06-09",
+    });
+  });
+
+  it("omits comment when reply text is empty, even if the reply object is present", () => {
+    const ids = createGraphIds(SITE_URL);
+    const review = buildReview(
+      { authorName: "Jane", reviewBody: "Great service.", reply: { text: "" } },
+      ids,
+    );
+
+    expect(review.comment).toBeUndefined();
+  });
 });
 
 describe("buildSoftwareApplication", () => {
@@ -696,6 +734,24 @@ describe("findGraphIssues -- new node kinds", () => {
         ids,
       ),
       buildReview({ authorName: "Jane", reviewBody: "Great service.", ratingValue: 5 }, ids),
+    ]);
+
+    expect(findGraphIssues(graph)).toEqual([]);
+  });
+
+  it("is clean for a Review with a reply -- the reply's Organization @id ref resolves against the spine", () => {
+    const ids = createGraphIds(SITE_URL);
+    const graph = buildGraph([
+      ...buildSpine(ORG_INPUT, WEBSITE_INPUT, ids),
+      buildReview(
+        {
+          authorName: "Jane",
+          reviewBody: "Great service.",
+          ratingValue: 5,
+          reply: { text: "Thanks Jane!", dateCreated: "2026-06-09" },
+        },
+        ids,
+      ),
     ]);
 
     expect(findGraphIssues(graph)).toEqual([]);
