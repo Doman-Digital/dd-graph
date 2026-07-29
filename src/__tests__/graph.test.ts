@@ -10,6 +10,7 @@ import {
   buildOrganization,
   buildPerson,
   buildPlace,
+  buildProduct,
   buildReview,
   buildService,
   buildSpine,
@@ -353,6 +354,88 @@ describe("buildReview", () => {
     const review = buildReview({ authorName: "Jane", reviewBody: "Great service.", ratingValue: 5 }, ids);
 
     expect(review.reviewRating).toEqual({ "@type": "Rating", ratingValue: 5, bestRating: 5, worstRating: 1 });
+  });
+});
+
+describe("buildProduct", () => {
+  it("omits offers for a rate-on-application product and includes it otherwise", () => {
+    const ids = createGraphIds(SITE_URL);
+    const poa = buildProduct(
+      { slug: "huracan-london", name: "Huracán hire, London", url: `${SITE_URL}/huracan-london` },
+      ids,
+    );
+    const priced = buildProduct(
+      {
+        slug: "huracan-london",
+        name: "Huracán hire, London",
+        url: `${SITE_URL}/huracan-london`,
+        offers: { price: "1500", priceCurrency: "GBP", unitText: "DAY" },
+      },
+      ids,
+    );
+
+    expect(poa.offers).toBeUndefined();
+    expect(priced.offers).toEqual({
+      "@type": "Offer",
+      priceCurrency: "GBP",
+      price: "1500",
+      availability: "https://schema.org/InStock",
+      url: `${SITE_URL}/huracan-london`,
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: "1500",
+        priceCurrency: "GBP",
+        unitText: "DAY",
+      },
+    });
+  });
+
+  it("preserves a string-typed aggregateRating verbatim, with no bestRating/worstRating defaults", () => {
+    const ids = createGraphIds(SITE_URL);
+    const product = buildProduct(
+      {
+        slug: "huracan-london",
+        name: "Huracán hire, London",
+        url: `${SITE_URL}/huracan-london`,
+        aggregateRating: { ratingValue: "4.7", reviewCount: "180" },
+      },
+      ids,
+    );
+
+    expect(product.aggregateRating).toEqual({
+      "@type": "AggregateRating",
+      ratingValue: "4.7",
+      reviewCount: "180",
+    });
+  });
+
+  it("has a stable @id distinct from other product slugs", () => {
+    const ids = createGraphIds(SITE_URL);
+    const product = buildProduct(
+      { slug: "huracan-london", name: "Huracán hire, London", url: `${SITE_URL}/huracan-london` },
+      ids,
+    );
+
+    expect(product["@id"]).toBe(ids.product("huracan-london"));
+  });
+});
+
+describe("buildOrganization areaServed", () => {
+  it("emits free-text areaServed when no areaServedIds are given", () => {
+    const ids = createGraphIds(SITE_URL);
+    const node = buildOrganization({ ...ORG_INPUT, areaServed: "London" }, ids);
+
+    expect(node.areaServed).toBe("London");
+  });
+
+  it("prefers areaServedIds as @id refs when both are given", () => {
+    const ids = createGraphIds(SITE_URL);
+    const node = buildOrganization(
+      { ...ORG_INPUT, areaServed: "London", areaServedIds: [ids.place("london")] },
+      ids,
+    );
+
+    expect(node.areaServed).toEqual([{ "@id": ids.place("london") }]);
   });
 });
 

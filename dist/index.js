@@ -6,6 +6,7 @@ function createGraphIds(siteUrl) {
     website: `${url}/#website`,
     person: (slug) => `${url}/#person-${slug}`,
     service: (slug) => `${url}/#service-${slug}`,
+    product: (slug) => `${url}/#product-${slug}`,
     place: (slug) => `${url}/#place-${slug}`,
     article: (slug) => `${url}/#article-${slug}`,
     breadcrumb: (path) => `${url}${path}#breadcrumb`,
@@ -102,6 +103,8 @@ function buildOrganization(input, ids, types = "LocalBusiness") {
   }
   if (input.areaServedIds && input.areaServedIds.length > 0) {
     node.areaServed = input.areaServedIds.map((id) => ({ "@id": id }));
+  } else if (input.areaServed) {
+    node.areaServed = input.areaServed;
   }
   if (input.sameAs && input.sameAs.length > 0) node.sameAs = input.sameAs;
   if (input.foundingDate) node.foundingDate = input.foundingDate;
@@ -337,6 +340,46 @@ function buildReview(input, ids) {
   if (input.url) node.url = input.url;
   return node;
 }
+function buildProduct(input, ids) {
+  const node = {
+    "@type": "Product",
+    "@id": ids.product(input.slug),
+    name: input.name,
+    url: input.url
+  };
+  if (input.imageUrl) node.image = input.imageUrl;
+  if (input.brandName) node.brand = { "@type": "Brand", name: input.brandName };
+  if (input.category) node.category = input.category;
+  if (input.description) node.description = input.description;
+  if (input.additionalProperty && input.additionalProperty.length > 0) {
+    node.additionalProperty = input.additionalProperty.map((p) => ({
+      "@type": "PropertyValue",
+      ...p
+    }));
+  }
+  if (input.offers) {
+    const offer = {
+      "@type": "Offer",
+      priceCurrency: input.offers.priceCurrency,
+      price: input.offers.price,
+      availability: input.offers.availability ?? "https://schema.org/InStock",
+      url: input.url
+    };
+    if (input.offers.unitText) {
+      offer.priceSpecification = {
+        "@type": "UnitPriceSpecification",
+        price: input.offers.price,
+        priceCurrency: input.offers.priceCurrency,
+        unitText: input.offers.unitText
+      };
+    }
+    node.offers = offer;
+  }
+  if (input.aggregateRating) {
+    node.aggregateRating = { "@type": "AggregateRating", ...input.aggregateRating };
+  }
+  return node;
+}
 
 // src/escape.ts
 var LINE_SEPARATOR = String.fromCharCode(8232);
@@ -356,6 +399,7 @@ export {
   buildOrganization,
   buildPerson,
   buildPlace,
+  buildProduct,
   buildReview,
   buildService,
   buildSpine,

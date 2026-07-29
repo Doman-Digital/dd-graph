@@ -50,6 +50,10 @@ export type OrganizationInput = {
   openingHoursSpecification?: Array<{ dayOfWeek: string[]; opens: string; closes: string }>;
   /** @id refs to Place nodes elsewhere in the same graph. */
   areaServedIds?: string[];
+  /** Free-text `areaServed` (e.g. a city name) -- use when the consumer
+   * doesn't model service areas as their own Place nodes. Distinct from
+   * `areaServedIds`; set at most one of the two. */
+  areaServed?: Nullable<string>;
   sameAs?: string[];
   /** Year (or full date) the business was founded, e.g. "2018". */
   foundingDate?: Nullable<string>;
@@ -118,6 +122,8 @@ export function buildOrganization(
   }
   if (input.areaServedIds && input.areaServedIds.length > 0) {
     node.areaServed = input.areaServedIds.map((id) => ({ "@id": id }));
+  } else if (input.areaServed) {
+    node.areaServed = input.areaServed;
   }
   if (input.sameAs && input.sameAs.length > 0) node.sameAs = input.sameAs;
   if (input.foundingDate) node.foundingDate = input.foundingDate;
@@ -475,5 +481,76 @@ export function buildReview(input: ReviewInput, ids: GraphIds) {
     };
   }
   if (input.url) node.url = input.url;
+  return node;
+}
+
+export type ProductInput = {
+  slug: string;
+  name: string;
+  url: string;
+  imageUrl?: Nullable<string>;
+  brandName?: Nullable<string>;
+  category?: Nullable<string>;
+  description?: Nullable<string>;
+  /** Rendered as PropertyValue rows -- spec-sheet style facts about the
+   * product (e.g. engine, power), not generic Organization identifiers. */
+  additionalProperty?: Array<{ name: string; value: string }>;
+  /** Omit entirely for a rate-on-application product with no public price --
+   * an Offer with a fabricated price is invalid structured data. */
+  offers?: {
+    price: string;
+    priceCurrency: string;
+    /** e.g. "DAY" for a day-rate rental. Adds a UnitPriceSpecification
+     * alongside the flat Offer price when set. */
+    unitText?: Nullable<string>;
+    availability?: Nullable<string>;
+  } | null;
+  /** `number` for a computed/live value; `string` to preserve a source
+   * literal's exact representation verbatim (see Organization's
+   * aggregateRating for the same reasoning). Unlike Organization, no
+   * bestRating/worstRating defaults are added -- a Product's rating is
+   * often narrower provenance than the sitewide one, so this stays a
+   * plain pass-through of exactly what's given. */
+  aggregateRating?: { ratingValue: number | string; reviewCount: number | string } | null;
+};
+
+export function buildProduct(input: ProductInput, ids: GraphIds) {
+  const node: Record<string, unknown> = {
+    "@type": "Product",
+    "@id": ids.product(input.slug),
+    name: input.name,
+    url: input.url,
+  };
+  if (input.imageUrl) node.image = input.imageUrl;
+  if (input.brandName) node.brand = { "@type": "Brand", name: input.brandName };
+  if (input.category) node.category = input.category;
+  if (input.description) node.description = input.description;
+  if (input.additionalProperty && input.additionalProperty.length > 0) {
+    node.additionalProperty = input.additionalProperty.map((p) => ({
+      "@type": "PropertyValue",
+      ...p,
+    }));
+  }
+  if (input.offers) {
+    const offer: Record<string, unknown> = {
+      "@type": "Offer",
+      priceCurrency: input.offers.priceCurrency,
+      price: input.offers.price,
+      availability: input.offers.availability ?? "https://schema.org/InStock",
+      url: input.url,
+    };
+    if (input.offers.unitText) {
+      offer.priceSpecification = {
+        "@type": "UnitPriceSpecification",
+        price: input.offers.price,
+        priceCurrency: input.offers.priceCurrency,
+        unitText: input.offers.unitText,
+      };
+    }
+    node.offers = offer;
+  }
+  if (input.aggregateRating) {
+    node.aggregateRating = { "@type": "AggregateRating", ...input.aggregateRating };
+  }
   return node;
 }

@@ -24,6 +24,7 @@ export function createGraphIds(siteUrl: string) {
     website: `${url}/#website`,
     person: (slug: string) => `${url}/#person-${slug}`,
     service: (slug: string) => `${url}/#service-${slug}`,
+    product: (slug: string) => `${url}/#product-${slug}`,
     place: (slug: string) => `${url}/#place-${slug}`,
     article: (slug: string) => `${url}/#article-${slug}`,
     breadcrumb: (path: string) => `${url}${path}#breadcrumb`,

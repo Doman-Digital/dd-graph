@@ -22,6 +22,7 @@ declare function createGraphIds(siteUrl: string): {
     website: string;
     person: (slug: string) => string;
     service: (slug: string) => string;
+    product: (slug: string) => string;
     place: (slug: string) => string;
     article: (slug: string) => string;
     breadcrumb: (path: string) => string;
@@ -91,6 +92,10 @@ type OrganizationInput = {
     }>;
     /** @id refs to Place nodes elsewhere in the same graph. */
     areaServedIds?: string[];
+    /** Free-text `areaServed` (e.g. a city name) -- use when the consumer
+     * doesn't model service areas as their own Place nodes. Distinct from
+     * `areaServedIds`; set at most one of the two. */
+    areaServed?: Nullable<string>;
     sameAs?: string[];
     /** Year (or full date) the business was founded, e.g. "2018". */
     foundingDate?: Nullable<string>;
@@ -308,7 +313,43 @@ type ReviewInput = {
 /** `itemReviewed` references the sitewide Organization by @id. No `@id` of
  * its own -- nothing else in the graph needs to reference a testimonial. */
 declare function buildReview(input: ReviewInput, ids: GraphIds): Record<string, unknown>;
+type ProductInput = {
+    slug: string;
+    name: string;
+    url: string;
+    imageUrl?: Nullable<string>;
+    brandName?: Nullable<string>;
+    category?: Nullable<string>;
+    description?: Nullable<string>;
+    /** Rendered as PropertyValue rows -- spec-sheet style facts about the
+     * product (e.g. engine, power), not generic Organization identifiers. */
+    additionalProperty?: Array<{
+        name: string;
+        value: string;
+    }>;
+    /** Omit entirely for a rate-on-application product with no public price --
+     * an Offer with a fabricated price is invalid structured data. */
+    offers?: {
+        price: string;
+        priceCurrency: string;
+        /** e.g. "DAY" for a day-rate rental. Adds a UnitPriceSpecification
+         * alongside the flat Offer price when set. */
+        unitText?: Nullable<string>;
+        availability?: Nullable<string>;
+    } | null;
+    /** `number` for a computed/live value; `string` to preserve a source
+     * literal's exact representation verbatim (see Organization's
+     * aggregateRating for the same reasoning). Unlike Organization, no
+     * bestRating/worstRating defaults are added -- a Product's rating is
+     * often narrower provenance than the sitewide one, so this stays a
+     * plain pass-through of exactly what's given. */
+    aggregateRating?: {
+        ratingValue: number | string;
+        reviewCount: number | string;
+    } | null;
+};
+declare function buildProduct(input: ProductInput, ids: GraphIds): Record<string, unknown>;
 
 declare function escapeJsonLdForScript(json: string): string;
 
-export { type ArticleInput, type BreadcrumbItem, type CollectionPageInput, type ContactPageInput, type FAQInput, type GraphIds, type JsonLdGraph, type JsonLdNode, type OrganizationInput, type PersonInput, type PlaceInput, type ReviewInput, type ServiceInput, type WebPageInput, buildArticle, buildBreadcrumbs, buildCollectionPage, buildContactPage, buildFAQPage, buildGraph, buildItemList, buildOfferCatalog, buildOrganization, buildPerson, buildPlace, buildReview, buildService, buildSpine, buildWebPage, buildWebsite, createGraphIds, escapeJsonLdForScript, findGraphIssues };
+export { type ArticleInput, type BreadcrumbItem, type CollectionPageInput, type ContactPageInput, type FAQInput, type GraphIds, type JsonLdGraph, type JsonLdNode, type OrganizationInput, type PersonInput, type PlaceInput, type ProductInput, type ReviewInput, type ServiceInput, type WebPageInput, buildArticle, buildBreadcrumbs, buildCollectionPage, buildContactPage, buildFAQPage, buildGraph, buildItemList, buildOfferCatalog, buildOrganization, buildPerson, buildPlace, buildProduct, buildReview, buildService, buildSpine, buildWebPage, buildWebsite, createGraphIds, escapeJsonLdForScript, findGraphIssues };
