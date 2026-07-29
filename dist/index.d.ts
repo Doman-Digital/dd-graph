@@ -222,16 +222,20 @@ declare function buildFAQPage(faqs: FAQInput[], opts?: {
     id?: string;
     speakable?: boolean;
 }): Record<string, unknown> | null;
+/** `url` is optional per schema.org's own BreadcrumbList spec -- Google's
+ * guidance is to omit it for the current page and for any crumb that has no
+ * real navigable URL yet, rather than pointing structured data at a URL
+ * that doesn't resolve. */
 type BreadcrumbItem = {
     name: string;
-    url: string;
+    url?: Nullable<string>;
 };
 declare function buildBreadcrumbs(items: BreadcrumbItem[], id?: string): {
     itemListElement: {
+        item?: string | undefined;
         "@type": string;
         position: number;
         name: string;
-        item: string;
     }[];
     "@id"?: string | undefined;
     "@type": string;

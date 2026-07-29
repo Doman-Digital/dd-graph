@@ -357,6 +357,22 @@ describe("buildReview", () => {
   });
 });
 
+describe("buildBreadcrumbs", () => {
+  it("omits item for a crumb with no url, per schema.org's own optionality", () => {
+    const node = buildBreadcrumbs([
+      { name: "Home", url: SITE_URL },
+      { name: "Self-drive" },
+      { name: "London" },
+    ]);
+
+    expect(node.itemListElement).toEqual([
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Self-drive" },
+      { "@type": "ListItem", position: 3, name: "London" },
+    ]);
+  });
+});
+
 describe("buildProduct", () => {
   it("omits offers for a rate-on-application product and includes it otherwise", () => {
     const ids = createGraphIds(SITE_URL);

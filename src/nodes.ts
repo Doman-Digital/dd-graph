@@ -334,7 +334,11 @@ export function buildFAQPage(faqs: FAQInput[], opts?: { id?: string; speakable?:
   return node;
 }
 
-export type BreadcrumbItem = { name: string; url: string };
+/** `url` is optional per schema.org's own BreadcrumbList spec -- Google's
+ * guidance is to omit it for the current page and for any crumb that has no
+ * real navigable URL yet, rather than pointing structured data at a URL
+ * that doesn't resolve. */
+export type BreadcrumbItem = { name: string; url?: Nullable<string> };
 
 export function buildBreadcrumbs(items: BreadcrumbItem[], id?: string) {
   return {
@@ -344,7 +348,7 @@ export function buildBreadcrumbs(items: BreadcrumbItem[], id?: string) {
       "@type": "ListItem",
       position: index + 1,
       name: item.name,
-      item: item.url,
+      ...(item.url ? { item: item.url } : {}),
     })),
   };
 }
