@@ -13,6 +13,7 @@ import {
   buildProduct,
   buildReview,
   buildService,
+  buildSoftwareApplication,
   buildSpine,
   buildWebPage,
   buildWebsite,
@@ -355,6 +356,33 @@ describe("buildReview", () => {
     const review = buildReview({ authorName: "Jane", reviewBody: "Great service.", ratingValue: 5 }, ids);
 
     expect(review.reviewRating).toEqual({ "@type": "Rating", ratingValue: 5, bestRating: 5, worstRating: 1 });
+  });
+});
+
+describe("buildSoftwareApplication", () => {
+  it("links publisher by @id and maps offers, only when provided", () => {
+    const ids = createGraphIds(SITE_URL);
+    const bare = buildSoftwareApplication(
+      { slug: "acme-app", name: "Acme App", applicationCategory: "BusinessApplication" },
+      ids,
+    );
+    const full = buildSoftwareApplication(
+      {
+        slug: "acme-app",
+        name: "Acme App",
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        publisherId: ids.org,
+        offers: [{ name: "Starter", price: "45", priceCurrency: "GBP" }],
+      },
+      ids,
+    );
+
+    expect(bare["@id"]).toBe(ids.product("acme-app"));
+    expect(bare.publisher).toBeUndefined();
+    expect(bare.offers).toBeUndefined();
+    expect(full.publisher).toEqual({ "@id": ids.org });
+    expect(full.offers).toEqual([{ "@type": "Offer", name: "Starter", price: "45", priceCurrency: "GBP" }]);
   });
 });
 

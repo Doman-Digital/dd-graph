@@ -18,6 +18,7 @@ export {
   buildProduct,
   buildReview,
   buildService,
+  buildSoftwareApplication,
   buildSpine,
   buildWebPage,
   buildWebsite,
@@ -34,6 +35,7 @@ export type {
   ProductInput,
   ReviewInput,
   ServiceInput,
+  SoftwareApplicationInput,
   WebPageInput,
   WebsiteInput,
 } from "./nodes";

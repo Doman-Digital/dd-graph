@@ -34,6 +34,7 @@ __export(index_exports, {
   buildProduct: () => buildProduct,
   buildReview: () => buildReview,
   buildService: () => buildService,
+  buildSoftwareApplication: () => buildSoftwareApplication,
   buildSpine: () => buildSpine,
   buildWebPage: () => buildWebPage,
   buildWebsite: () => buildWebsite,
@@ -441,6 +442,28 @@ function buildProduct(input, ids) {
   }
   return node;
 }
+function buildSoftwareApplication(input, ids) {
+  const node = {
+    "@type": "SoftwareApplication",
+    "@id": ids.product(input.slug),
+    name: input.name,
+    applicationCategory: input.applicationCategory
+  };
+  if (input.operatingSystem) node.operatingSystem = input.operatingSystem;
+  if (input.description) node.description = input.description;
+  if (input.url) node.url = input.url;
+  if (input.publisherId) node.publisher = { "@id": input.publisherId };
+  if (input.offers && input.offers.length > 0) {
+    node.offers = input.offers.map((o) => ({
+      "@type": "Offer",
+      name: o.name,
+      price: o.price,
+      priceCurrency: o.priceCurrency,
+      ...o.url ? { url: o.url } : {}
+    }));
+  }
+  return node;
+}
 
 // src/escape.ts
 var LINE_SEPARATOR = String.fromCharCode(8232);
@@ -464,6 +487,7 @@ function escapeJsonLdForScript(json) {
   buildProduct,
   buildReview,
   buildService,
+  buildSoftwareApplication,
   buildSpine,
   buildWebPage,
   buildWebsite,

@@ -596,3 +596,46 @@ export function buildProduct(input: ProductInput, ids: GraphIds) {
   }
   return node;
 }
+
+export type SoftwareApplicationInput = {
+  slug: string;
+  name: string;
+  applicationCategory: string;
+  operatingSystem?: Nullable<string>;
+  description?: Nullable<string>;
+  url?: Nullable<string>;
+  /** @id ref to the Organization node that publishes this software --
+   * schema.org's SoftwareApplication inherits `publisher` from
+   * CreativeWork. Optional since not every consumer's Organization is
+   * the software's own publisher (e.g. a marketplace listing). */
+  publisherId?: Nullable<string>;
+  offers?: Array<{ name: string; price: string; priceCurrency: string; url?: Nullable<string> }>;
+};
+
+/** For a SaaS product's own marketing site -- distinct from Product/
+ * Service, which model a physical good or a booked service. Reuses the
+ * `product` @id namespace (both are "sellable things" in schema.org's
+ * ontology) rather than adding a fourth id-kind for a shape most
+ * consumers in this portfolio will never need. */
+export function buildSoftwareApplication(input: SoftwareApplicationInput, ids: GraphIds) {
+  const node: Record<string, unknown> = {
+    "@type": "SoftwareApplication",
+    "@id": ids.product(input.slug),
+    name: input.name,
+    applicationCategory: input.applicationCategory,
+  };
+  if (input.operatingSystem) node.operatingSystem = input.operatingSystem;
+  if (input.description) node.description = input.description;
+  if (input.url) node.url = input.url;
+  if (input.publisherId) node.publisher = { "@id": input.publisherId };
+  if (input.offers && input.offers.length > 0) {
+    node.offers = input.offers.map((o) => ({
+      "@type": "Offer",
+      name: o.name,
+      price: o.price,
+      priceCurrency: o.priceCurrency,
+      ...(o.url ? { url: o.url } : {}),
+    }));
+  }
+  return node;
+}

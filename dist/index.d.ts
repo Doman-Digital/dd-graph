@@ -362,7 +362,32 @@ type ProductInput = {
     } | null;
 };
 declare function buildProduct(input: ProductInput, ids: GraphIds): Record<string, unknown>;
+type SoftwareApplicationInput = {
+    slug: string;
+    name: string;
+    applicationCategory: string;
+    operatingSystem?: Nullable<string>;
+    description?: Nullable<string>;
+    url?: Nullable<string>;
+    /** @id ref to the Organization node that publishes this software --
+     * schema.org's SoftwareApplication inherits `publisher` from
+     * CreativeWork. Optional since not every consumer's Organization is
+     * the software's own publisher (e.g. a marketplace listing). */
+    publisherId?: Nullable<string>;
+    offers?: Array<{
+        name: string;
+        price: string;
+        priceCurrency: string;
+        url?: Nullable<string>;
+    }>;
+};
+/** For a SaaS product's own marketing site -- distinct from Product/
+ * Service, which model a physical good or a booked service. Reuses the
+ * `product` @id namespace (both are "sellable things" in schema.org's
+ * ontology) rather than adding a fourth id-kind for a shape most
+ * consumers in this portfolio will never need. */
+declare function buildSoftwareApplication(input: SoftwareApplicationInput, ids: GraphIds): Record<string, unknown>;
 
 declare function escapeJsonLdForScript(json: string): string;
 
-export { type ArticleInput, type BreadcrumbItem, type CollectionPageInput, type ContactPageInput, type FAQInput, type GraphIds, type JsonLdGraph, type JsonLdNode, type OrganizationInput, type PersonInput, type PlaceInput, type ProductInput, type ReviewInput, type ServiceInput, type WebPageInput, type WebsiteInput, buildArticle, buildBreadcrumbs, buildCollectionPage, buildContactPage, buildFAQPage, buildGraph, buildItemList, buildOfferCatalog, buildOrganization, buildPerson, buildPlace, buildProduct, buildReview, buildService, buildSpine, buildWebPage, buildWebsite, createGraphIds, escapeJsonLdForScript, findGraphIssues };
+export { type ArticleInput, type BreadcrumbItem, type CollectionPageInput, type ContactPageInput, type FAQInput, type GraphIds, type JsonLdGraph, type JsonLdNode, type OrganizationInput, type PersonInput, type PlaceInput, type ProductInput, type ReviewInput, type ServiceInput, type SoftwareApplicationInput, type WebPageInput, type WebsiteInput, buildArticle, buildBreadcrumbs, buildCollectionPage, buildContactPage, buildFAQPage, buildGraph, buildItemList, buildOfferCatalog, buildOrganization, buildPerson, buildPlace, buildProduct, buildReview, buildService, buildSoftwareApplication, buildSpine, buildWebPage, buildWebsite, createGraphIds, escapeJsonLdForScript, findGraphIssues };
