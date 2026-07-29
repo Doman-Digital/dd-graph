@@ -15,6 +15,7 @@ import {
   buildService,
   buildSpine,
   buildWebPage,
+  buildWebsite,
 } from "../nodes";
 
 const SITE_URL = "https://example-electrician.co.uk";
@@ -452,6 +453,65 @@ describe("buildOrganization areaServed", () => {
     );
 
     expect(node.areaServed).toEqual([{ "@id": ids.place("london") }]);
+  });
+
+  it("emits a GeoCircle when areaServedGeoCircle is given and no areaServedIds", () => {
+    const ids = createGraphIds(SITE_URL);
+    const node = buildOrganization(
+      { ...ORG_INPUT, areaServedGeoCircle: { latitude: 51.7, longitude: -0.9, radiusMeters: "15000" } },
+      ids,
+    );
+
+    expect(node.areaServed).toEqual({
+      "@type": "GeoCircle",
+      geoMidpoint: { "@type": "GeoCoordinates", latitude: 51.7, longitude: -0.9 },
+      geoRadius: "15000",
+    });
+  });
+
+  it("prefers areaServedIds over areaServedGeoCircle when both are given", () => {
+    const ids = createGraphIds(SITE_URL);
+    const node = buildOrganization(
+      {
+        ...ORG_INPUT,
+        areaServedIds: [ids.place("chinnor")],
+        areaServedGeoCircle: { latitude: 51.7, longitude: -0.9, radiusMeters: "15000" },
+      },
+      ids,
+    );
+
+    expect(node.areaServed).toEqual([{ "@id": ids.place("chinnor") }]);
+  });
+});
+
+describe("buildWebsite potentialAction", () => {
+  it("emits potentialAction with an EntryPoint target and optional result", () => {
+    const ids = createGraphIds(SITE_URL);
+    const website = buildWebsite(
+      {
+        name: "Acme",
+        url: SITE_URL,
+        potentialAction: {
+          type: "ReserveAction",
+          targetUrlTemplate: `${SITE_URL}/booking`,
+          resultType: "Reservation",
+        },
+      },
+      ids,
+    );
+
+    expect(website.potentialAction).toEqual({
+      "@type": "ReserveAction",
+      target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/booking` },
+      result: { "@type": "Reservation" },
+    });
+  });
+
+  it("omits potentialAction when not given", () => {
+    const ids = createGraphIds(SITE_URL);
+    const website = buildWebsite({ name: "Acme", url: SITE_URL }, ids);
+
+    expect(website.potentialAction).toBeUndefined();
   });
 });
 

@@ -96,6 +96,15 @@ type OrganizationInput = {
      * doesn't model service areas as their own Place nodes. Distinct from
      * `areaServedIds`; set at most one of the two. */
     areaServed?: Nullable<string>;
+    /** A `GeoCircle` service radius (e.g. "we cover a 15km radius around
+     * this point") -- a third `areaServed` representation, for a mobile/
+     * local-radius business with no fixed set of named areas. Set at most
+     * one of `areaServedIds` / `areaServed` / `areaServedGeoCircle`. */
+    areaServedGeoCircle?: {
+        latitude: number;
+        longitude: number;
+        radiusMeters: string;
+    } | null;
     sameAs?: string[];
     /** Year (or full date) the business was founded, e.g. "2018". */
     foundingDate?: Nullable<string>;
@@ -128,26 +137,25 @@ type OrganizationInput = {
     }>;
 };
 declare function buildOrganization(input: OrganizationInput, ids: GraphIds, types?: string | string[]): Record<string, unknown>;
-declare function buildWebsite(input: {
+type WebsiteInput = {
     name: string;
     url: string;
-}, ids: GraphIds): {
-    "@type": string;
-    "@id": string;
-    name: string;
-    url: string;
-    publisher: {
-        "@id": string;
-    };
+    /** e.g. a booking ReserveAction or a site SearchAction -- schema.org's
+     * generic WebSite.potentialAction shape, parameterized by @type so this
+     * one field covers any of them rather than adding a new field per
+     * action kind. */
+    potentialAction?: {
+        type: string;
+        targetUrlTemplate: string;
+        resultType?: Nullable<string>;
+    } | null;
 };
+declare function buildWebsite(input: WebsiteInput, ids: GraphIds): Record<string, unknown>;
 /** Convenience for the two nodes almost every page includes: Organization +
  * WebSite. A founder/team Person is deliberately NOT bundled here -- not
  * every business has one canonical figurehead -- add `buildPerson(...)`
  * alongside this in the consumer if it does. */
-declare function buildSpine(organizationInput: OrganizationInput, websiteInput: {
-    name: string;
-    url: string;
-}, ids: GraphIds, types?: string | string[]): [ReturnType<typeof buildOrganization>, ReturnType<typeof buildWebsite>];
+declare function buildSpine(organizationInput: OrganizationInput, websiteInput: WebsiteInput, ids: GraphIds, types?: string | string[]): [ReturnType<typeof buildOrganization>, ReturnType<typeof buildWebsite>];
 type PersonInput = {
     name: string;
     slug: string;
@@ -356,4 +364,4 @@ declare function buildProduct(input: ProductInput, ids: GraphIds): Record<string
 
 declare function escapeJsonLdForScript(json: string): string;
 
-export { type ArticleInput, type BreadcrumbItem, type CollectionPageInput, type ContactPageInput, type FAQInput, type GraphIds, type JsonLdGraph, type JsonLdNode, type OrganizationInput, type PersonInput, type PlaceInput, type ProductInput, type ReviewInput, type ServiceInput, type WebPageInput, buildArticle, buildBreadcrumbs, buildCollectionPage, buildContactPage, buildFAQPage, buildGraph, buildItemList, buildOfferCatalog, buildOrganization, buildPerson, buildPlace, buildProduct, buildReview, buildService, buildSpine, buildWebPage, buildWebsite, createGraphIds, escapeJsonLdForScript, findGraphIssues };
+export { type ArticleInput, type BreadcrumbItem, type CollectionPageInput, type ContactPageInput, type FAQInput, type GraphIds, type JsonLdGraph, type JsonLdNode, type OrganizationInput, type PersonInput, type PlaceInput, type ProductInput, type ReviewInput, type ServiceInput, type WebPageInput, type WebsiteInput, buildArticle, buildBreadcrumbs, buildCollectionPage, buildContactPage, buildFAQPage, buildGraph, buildItemList, buildOfferCatalog, buildOrganization, buildPerson, buildPlace, buildProduct, buildReview, buildService, buildSpine, buildWebPage, buildWebsite, createGraphIds, escapeJsonLdForScript, findGraphIssues };

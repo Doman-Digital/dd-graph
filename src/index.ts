@@ -35,6 +35,7 @@ export type {
   ReviewInput,
   ServiceInput,
   WebPageInput,
+  WebsiteInput,
 } from "./nodes";
 
 export { escapeJsonLdForScript } from "./escape";

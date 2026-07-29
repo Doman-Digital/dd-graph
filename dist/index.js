@@ -103,6 +103,13 @@ function buildOrganization(input, ids, types = "LocalBusiness") {
   }
   if (input.areaServedIds && input.areaServedIds.length > 0) {
     node.areaServed = input.areaServedIds.map((id) => ({ "@id": id }));
+  } else if (input.areaServedGeoCircle) {
+    const g = input.areaServedGeoCircle;
+    node.areaServed = {
+      "@type": "GeoCircle",
+      geoMidpoint: { "@type": "GeoCoordinates", latitude: g.latitude, longitude: g.longitude },
+      geoRadius: g.radiusMeters
+    };
   } else if (input.areaServed) {
     node.areaServed = input.areaServed;
   }
@@ -127,13 +134,21 @@ function buildOrganization(input, ids, types = "LocalBusiness") {
   return node;
 }
 function buildWebsite(input, ids) {
-  return {
+  const node = {
     "@type": "WebSite",
     "@id": ids.website,
     name: input.name,
     url: input.url,
     publisher: { "@id": ids.org }
   };
+  if (input.potentialAction) {
+    node.potentialAction = {
+      "@type": input.potentialAction.type,
+      target: { "@type": "EntryPoint", urlTemplate: input.potentialAction.targetUrlTemplate },
+      ...input.potentialAction.resultType ? { result: { "@type": input.potentialAction.resultType } } : {}
+    };
+  }
+  return node;
 }
 function buildSpine(organizationInput, websiteInput, ids, types) {
   return [buildOrganization(organizationInput, ids, types), buildWebsite(websiteInput, ids)];

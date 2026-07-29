@@ -54,6 +54,11 @@ export type OrganizationInput = {
    * doesn't model service areas as their own Place nodes. Distinct from
    * `areaServedIds`; set at most one of the two. */
   areaServed?: Nullable<string>;
+  /** A `GeoCircle` service radius (e.g. "we cover a 15km radius around
+   * this point") -- a third `areaServed` representation, for a mobile/
+   * local-radius business with no fixed set of named areas. Set at most
+   * one of `areaServedIds` / `areaServed` / `areaServedGeoCircle`. */
+  areaServedGeoCircle?: { latitude: number; longitude: number; radiusMeters: string } | null;
   sameAs?: string[];
   /** Year (or full date) the business was founded, e.g. "2018". */
   foundingDate?: Nullable<string>;
@@ -122,6 +127,13 @@ export function buildOrganization(
   }
   if (input.areaServedIds && input.areaServedIds.length > 0) {
     node.areaServed = input.areaServedIds.map((id) => ({ "@id": id }));
+  } else if (input.areaServedGeoCircle) {
+    const g = input.areaServedGeoCircle;
+    node.areaServed = {
+      "@type": "GeoCircle",
+      geoMidpoint: { "@type": "GeoCoordinates", latitude: g.latitude, longitude: g.longitude },
+      geoRadius: g.radiusMeters,
+    };
   } else if (input.areaServed) {
     node.areaServed = input.areaServed;
   }
@@ -146,14 +158,38 @@ export function buildOrganization(
   return node;
 }
 
-export function buildWebsite(input: { name: string; url: string }, ids: GraphIds) {
-  return {
+export type WebsiteInput = {
+  name: string;
+  url: string;
+  /** e.g. a booking ReserveAction or a site SearchAction -- schema.org's
+   * generic WebSite.potentialAction shape, parameterized by @type so this
+   * one field covers any of them rather than adding a new field per
+   * action kind. */
+  potentialAction?: {
+    type: string;
+    targetUrlTemplate: string;
+    resultType?: Nullable<string>;
+  } | null;
+};
+
+export function buildWebsite(input: WebsiteInput, ids: GraphIds) {
+  const node: Record<string, unknown> = {
     "@type": "WebSite",
     "@id": ids.website,
     name: input.name,
     url: input.url,
     publisher: { "@id": ids.org },
   };
+  if (input.potentialAction) {
+    node.potentialAction = {
+      "@type": input.potentialAction.type,
+      target: { "@type": "EntryPoint", urlTemplate: input.potentialAction.targetUrlTemplate },
+      ...(input.potentialAction.resultType
+        ? { result: { "@type": input.potentialAction.resultType } }
+        : {}),
+    };
+  }
+  return node;
 }
 
 /** Convenience for the two nodes almost every page includes: Organization +
@@ -162,7 +198,7 @@ export function buildWebsite(input: { name: string; url: string }, ids: GraphIds
  * alongside this in the consumer if it does. */
 export function buildSpine(
   organizationInput: OrganizationInput,
-  websiteInput: { name: string; url: string },
+  websiteInput: WebsiteInput,
   ids: GraphIds,
   types?: string | string[],
 ): [ReturnType<typeof buildOrganization>, ReturnType<typeof buildWebsite>] {
