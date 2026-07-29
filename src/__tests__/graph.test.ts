@@ -160,6 +160,17 @@ describe("buildOrganization identifiers", () => {
   });
 });
 
+describe("buildOrganization alternateName", () => {
+  it("emits alternateName only when provided, distinct from legalName", () => {
+    const ids = createGraphIds(SITE_URL);
+    const withAlternate = buildOrganization({ ...ORG_INPUT, alternateName: "Also Known As" }, ids);
+    const withoutAlternate = buildOrganization(ORG_INPUT, ids);
+
+    expect(withAlternate.alternateName).toBe("Also Known As");
+    expect(withoutAlternate.alternateName).toBeUndefined();
+  });
+});
+
 describe("buildPerson", () => {
   it("emits sameAs and hasCredential as EducationalOccupationalCredential, distinct from identifier", () => {
     const ids = createGraphIds(SITE_URL);

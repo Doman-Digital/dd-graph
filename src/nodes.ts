@@ -20,6 +20,10 @@ type Nullable<T> = T | null | undefined;
 export type OrganizationInput = {
   name: string;
   legalName?: Nullable<string>;
+  /** A distinct public-facing name the business also trades under (e.g. a
+   * practitioner's personal brand) -- separate from `legalName`, which is
+   * the registered entity name. */
+  alternateName?: Nullable<string>;
   description: string;
   url: string;
   phone?: Nullable<string>;
@@ -72,6 +76,7 @@ export function buildOrganization(
     url: input.url,
   };
   if (input.legalName) node.legalName = input.legalName;
+  if (input.alternateName) node.alternateName = input.alternateName;
   if (input.phone) node.telephone = input.phone;
   if (input.email) node.email = input.email;
   if (input.logoUrl) node.logo = input.logoUrl;

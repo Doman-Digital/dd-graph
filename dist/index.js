@@ -71,6 +71,7 @@ function buildOrganization(input, ids, types = "LocalBusiness") {
     url: input.url
   };
   if (input.legalName) node.legalName = input.legalName;
+  if (input.alternateName) node.alternateName = input.alternateName;
   if (input.phone) node.telephone = input.phone;
   if (input.email) node.email = input.email;
   if (input.logoUrl) node.logo = input.logoUrl;

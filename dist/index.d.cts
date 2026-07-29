@@ -54,6 +54,10 @@ type Nullable<T> = T | null | undefined;
 type OrganizationInput = {
     name: string;
     legalName?: Nullable<string>;
+    /** A distinct public-facing name the business also trades under (e.g. a
+     * practitioner's personal brand) -- separate from `legalName`, which is
+     * the registered entity name. */
+    alternateName?: Nullable<string>;
     description: string;
     url: string;
     phone?: Nullable<string>;
