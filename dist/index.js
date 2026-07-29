@@ -111,7 +111,7 @@ function buildOrganization(input, ids, types = "LocalBusiness") {
       geoRadius: g.radiusMeters
     };
   } else if (input.areaServed) {
-    node.areaServed = input.areaServed;
+    node.areaServed = Array.isArray(input.areaServed) ? input.areaServed.map((name) => ({ "@type": "City", name })) : input.areaServed;
   }
   if (input.sameAs && input.sameAs.length > 0) node.sameAs = input.sameAs;
   if (input.foundingDate) node.foundingDate = input.foundingDate;
@@ -131,6 +131,9 @@ function buildOrganization(input, ids, types = "LocalBusiness") {
   if (input.identifiers && input.identifiers.length > 0) {
     node.identifier = input.identifiers.map((i) => ({ "@type": "PropertyValue", ...i }));
   }
+  if (input.hasMap) node.hasMap = input.hasMap;
+  if (input.paymentAccepted) node.paymentAccepted = input.paymentAccepted;
+  if (input.currenciesAccepted) node.currenciesAccepted = input.currenciesAccepted;
   return node;
 }
 function buildWebsite(input, ids) {

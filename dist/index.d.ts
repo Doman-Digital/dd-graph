@@ -92,10 +92,13 @@ type OrganizationInput = {
     }>;
     /** @id refs to Place nodes elsewhere in the same graph. */
     areaServedIds?: string[];
-    /** Free-text `areaServed` (e.g. a city name) -- use when the consumer
-     * doesn't model service areas as their own Place nodes. Distinct from
-     * `areaServedIds`; set at most one of the two. */
-    areaServed?: Nullable<string>;
+    /** Free-text `areaServed` (e.g. a city name), or an array of city names
+     * emitted as anonymous `{'@type': 'City', name}` literals -- use the
+     * array form for a business that names several towns it serves but
+     * doesn't model any of them as its own linked Place node elsewhere in
+     * the graph (see `areaServedIds` for that richer case). Distinct from
+     * `areaServedIds`; set at most one of the three `areaServed*` fields. */
+    areaServed?: Nullable<string> | string[];
     /** A `GeoCircle` service radius (e.g. "we cover a 15km radius around
      * this point") -- a third `areaServed` representation, for a mobile/
      * local-radius business with no fixed set of named areas. Set at most
@@ -137,6 +140,13 @@ type OrganizationInput = {
         value: string;
         url?: Nullable<string>;
     }>;
+    /** A directions/maps URL -- schema.org's `hasMap`, distinct from `geo`
+     * (raw coordinates). */
+    hasMap?: Nullable<string>;
+    /** Free-text `paymentAccepted` (e.g. "Cash, Credit Card, Debit Card"). */
+    paymentAccepted?: Nullable<string>;
+    /** Free-text `currenciesAccepted` (e.g. "GBP"). */
+    currenciesAccepted?: Nullable<string>;
 };
 declare function buildOrganization(input: OrganizationInput, ids: GraphIds, types?: string | string[]): Record<string, unknown>;
 type WebsiteInput = {

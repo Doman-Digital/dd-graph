@@ -50,10 +50,13 @@ export type OrganizationInput = {
   openingHoursSpecification?: Array<{ dayOfWeek: string[]; opens: string; closes: string }>;
   /** @id refs to Place nodes elsewhere in the same graph. */
   areaServedIds?: string[];
-  /** Free-text `areaServed` (e.g. a city name) -- use when the consumer
-   * doesn't model service areas as their own Place nodes. Distinct from
-   * `areaServedIds`; set at most one of the two. */
-  areaServed?: Nullable<string>;
+  /** Free-text `areaServed` (e.g. a city name), or an array of city names
+   * emitted as anonymous `{'@type': 'City', name}` literals -- use the
+   * array form for a business that names several towns it serves but
+   * doesn't model any of them as its own linked Place node elsewhere in
+   * the graph (see `areaServedIds` for that richer case). Distinct from
+   * `areaServedIds`; set at most one of the three `areaServed*` fields. */
+  areaServed?: Nullable<string> | string[];
   /** A `GeoCircle` service radius (e.g. "we cover a 15km radius around
    * this point") -- a third `areaServed` representation, for a mobile/
    * local-radius business with no fixed set of named areas. Set at most
@@ -83,6 +86,13 @@ export type OrganizationInput = {
    * etc.) as `PropertyValue` rows -- generic Organization data, not niche
    * mapping, so it stays in the package rather than a per-consumer literal. */
   identifiers?: Array<{ propertyID: string; name?: Nullable<string>; value: string; url?: Nullable<string> }>;
+  /** A directions/maps URL -- schema.org's `hasMap`, distinct from `geo`
+   * (raw coordinates). */
+  hasMap?: Nullable<string>;
+  /** Free-text `paymentAccepted` (e.g. "Cash, Credit Card, Debit Card"). */
+  paymentAccepted?: Nullable<string>;
+  /** Free-text `currenciesAccepted` (e.g. "GBP"). */
+  currenciesAccepted?: Nullable<string>;
 };
 
 export function buildOrganization(
@@ -137,7 +147,9 @@ export function buildOrganization(
       geoRadius: g.radiusMeters,
     };
   } else if (input.areaServed) {
-    node.areaServed = input.areaServed;
+    node.areaServed = Array.isArray(input.areaServed)
+      ? input.areaServed.map((name) => ({ "@type": "City", name }))
+      : input.areaServed;
   }
   if (input.sameAs && input.sameAs.length > 0) node.sameAs = input.sameAs;
   if (input.foundingDate) node.foundingDate = input.foundingDate;
@@ -157,6 +169,9 @@ export function buildOrganization(
   if (input.identifiers && input.identifiers.length > 0) {
     node.identifier = input.identifiers.map((i) => ({ "@type": "PropertyValue", ...i }));
   }
+  if (input.hasMap) node.hasMap = input.hasMap;
+  if (input.paymentAccepted) node.paymentAccepted = input.paymentAccepted;
+  if (input.currenciesAccepted) node.currenciesAccepted = input.currenciesAccepted;
   return node;
 }
 

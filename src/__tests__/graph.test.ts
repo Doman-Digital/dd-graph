@@ -163,6 +163,29 @@ describe("buildOrganization identifiers", () => {
   });
 });
 
+describe("buildOrganization hasMap / paymentAccepted / currenciesAccepted", () => {
+  it("emits each only when provided", () => {
+    const ids = createGraphIds(SITE_URL);
+    const withFields = buildOrganization(
+      {
+        ...ORG_INPUT,
+        hasMap: "https://maps.example.com/acme",
+        paymentAccepted: "Cash, Credit Card, Debit Card",
+        currenciesAccepted: "GBP",
+      },
+      ids,
+    );
+    const withoutFields = buildOrganization(ORG_INPUT, ids);
+
+    expect(withFields.hasMap).toBe("https://maps.example.com/acme");
+    expect(withFields.paymentAccepted).toBe("Cash, Credit Card, Debit Card");
+    expect(withFields.currenciesAccepted).toBe("GBP");
+    expect(withoutFields.hasMap).toBeUndefined();
+    expect(withoutFields.paymentAccepted).toBeUndefined();
+    expect(withoutFields.currenciesAccepted).toBeUndefined();
+  });
+});
+
 describe("buildOrganization alternateName", () => {
   it("emits alternateName only when provided, distinct from legalName", () => {
     const ids = createGraphIds(SITE_URL);
@@ -496,6 +519,16 @@ describe("buildOrganization areaServed", () => {
     const node = buildOrganization({ ...ORG_INPUT, areaServed: "London" }, ids);
 
     expect(node.areaServed).toBe("London");
+  });
+
+  it("emits an array of anonymous City literals when areaServed is a string array", () => {
+    const ids = createGraphIds(SITE_URL);
+    const node = buildOrganization({ ...ORG_INPUT, areaServed: ["Brackley", "Banbury"] }, ids);
+
+    expect(node.areaServed).toEqual([
+      { "@type": "City", name: "Brackley" },
+      { "@type": "City", name: "Banbury" },
+    ]);
   });
 
   it("prefers areaServedIds as @id refs when both are given", () => {
