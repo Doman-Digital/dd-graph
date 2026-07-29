@@ -484,6 +484,17 @@ describe("buildOrganization areaServed", () => {
   });
 });
 
+describe("buildWebsite description", () => {
+  it("emits description only when provided", () => {
+    const ids = createGraphIds(SITE_URL);
+    const withDescription = buildWebsite({ name: "Acme", url: SITE_URL, description: "A site." }, ids);
+    const withoutDescription = buildWebsite({ name: "Acme", url: SITE_URL }, ids);
+
+    expect(withDescription.description).toBe("A site.");
+    expect(withoutDescription.description).toBeUndefined();
+  });
+});
+
 describe("buildWebsite potentialAction", () => {
   it("emits potentialAction with an EntryPoint target and optional result", () => {
     const ids = createGraphIds(SITE_URL);

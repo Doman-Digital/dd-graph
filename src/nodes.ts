@@ -161,6 +161,7 @@ export function buildOrganization(
 export type WebsiteInput = {
   name: string;
   url: string;
+  description?: Nullable<string>;
   /** e.g. a booking ReserveAction or a site SearchAction -- schema.org's
    * generic WebSite.potentialAction shape, parameterized by @type so this
    * one field covers any of them rather than adding a new field per
@@ -180,6 +181,7 @@ export function buildWebsite(input: WebsiteInput, ids: GraphIds) {
     url: input.url,
     publisher: { "@id": ids.org },
   };
+  if (input.description) node.description = input.description;
   if (input.potentialAction) {
     node.potentialAction = {
       "@type": input.potentialAction.type,

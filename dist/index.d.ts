@@ -140,6 +140,7 @@ declare function buildOrganization(input: OrganizationInput, ids: GraphIds, type
 type WebsiteInput = {
     name: string;
     url: string;
+    description?: Nullable<string>;
     /** e.g. a booking ReserveAction or a site SearchAction -- schema.org's
      * generic WebSite.potentialAction shape, parameterized by @type so this
      * one field covers any of them rather than adding a new field per

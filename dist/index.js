@@ -141,6 +141,7 @@ function buildWebsite(input, ids) {
     url: input.url,
     publisher: { "@id": ids.org }
   };
+  if (input.description) node.description = input.description;
   if (input.potentialAction) {
     node.potentialAction = {
       "@type": input.potentialAction.type,
