@@ -171,6 +171,16 @@ describe("buildOrganization alternateName", () => {
   });
 });
 
+describe("buildOrganization openingHours", () => {
+  it("emits free-text openingHours distinct from openingHoursSpecification", () => {
+    const ids = createGraphIds(SITE_URL);
+    const node = buildOrganization({ ...ORG_INPUT, openingHours: "Appointments only" }, ids);
+
+    expect(node.openingHours).toBe("Appointments only");
+    expect(node.openingHoursSpecification).toBeUndefined();
+  });
+});
+
 describe("buildPerson", () => {
   it("emits sameAs and hasCredential as EducationalOccupationalCredential, distinct from identifier", () => {
     const ids = createGraphIds(SITE_URL);

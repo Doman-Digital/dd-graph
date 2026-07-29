@@ -123,6 +123,7 @@ function buildOrganization(input, ids, types = "LocalBusiness") {
   if (input.address) node.address = { "@type": "PostalAddress", ...input.address };
   if (input.geo) node.geo = { "@type": "GeoCoordinates", ...input.geo };
   if (input.priceRange) node.priceRange = input.priceRange;
+  if (input.openingHours) node.openingHours = input.openingHours;
   if (input.openingHoursSpecification && input.openingHoursSpecification.length > 0) {
     node.openingHoursSpecification = input.openingHoursSpecification.map((h) => ({
       "@type": "OpeningHoursSpecification",

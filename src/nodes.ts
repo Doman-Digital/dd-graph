@@ -40,6 +40,11 @@ export type OrganizationInput = {
   } | null;
   geo?: { latitude: string; longitude: string } | null;
   priceRange?: Nullable<string>;
+  /** Free-text schema.org `openingHours` (e.g. "Appointments only", or a
+   * Mo-Fr/09:00-17:00-style string) -- distinct from the structured
+   * `openingHoursSpecification` below. Use this when the business doesn't
+   * have machine-readable per-day hours to offer. */
+  openingHours?: Nullable<string>;
   /** Pre-shaped schema.org rows: one entry per group of days sharing hours.
    * Adapt your CMS's per-day shape to this before calling. */
   openingHoursSpecification?: Array<{ dayOfWeek: string[]; opens: string; closes: string }>;
@@ -84,6 +89,7 @@ export function buildOrganization(
   if (input.address) node.address = { "@type": "PostalAddress", ...input.address };
   if (input.geo) node.geo = { "@type": "GeoCoordinates", ...input.geo };
   if (input.priceRange) node.priceRange = input.priceRange;
+  if (input.openingHours) node.openingHours = input.openingHours;
   if (input.openingHoursSpecification && input.openingHoursSpecification.length > 0) {
     node.openingHoursSpecification = input.openingHoursSpecification.map((h) => ({
       "@type": "OpeningHoursSpecification",

@@ -77,6 +77,11 @@ type OrganizationInput = {
         longitude: string;
     } | null;
     priceRange?: Nullable<string>;
+    /** Free-text schema.org `openingHours` (e.g. "Appointments only", or a
+     * Mo-Fr/09:00-17:00-style string) -- distinct from the structured
+     * `openingHoursSpecification` below. Use this when the business doesn't
+     * have machine-readable per-day hours to offer. */
+    openingHours?: Nullable<string>;
     /** Pre-shaped schema.org rows: one entry per group of days sharing hours.
      * Adapt your CMS's per-day shape to this before calling. */
     openingHoursSpecification?: Array<{
