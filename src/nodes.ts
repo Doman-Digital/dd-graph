@@ -92,7 +92,21 @@ export function buildOrganization(
   if (input.email) node.email = input.email;
   if (input.logoUrl) node.logo = input.logoUrl;
   if (input.image && input.image.length > 0) node.image = input.image;
-  if (input.address) node.address = { "@type": "PostalAddress", ...input.address };
+  if (input.address) {
+    const a = input.address;
+    node.address = {
+      "@type": "PostalAddress",
+      ...(a.streetAddress ? { streetAddress: a.streetAddress } : {}),
+      // schema.org's PostalAddress properties are addressLocality/
+      // addressRegion/addressCountry, NOT the bare locality/region/country
+      // this input type uses -- input field names stay ergonomic, output
+      // keys must match the vocabulary or parsers silently ignore them.
+      ...(a.locality ? { addressLocality: a.locality } : {}),
+      ...(a.region ? { addressRegion: a.region } : {}),
+      ...(a.postalCode ? { postalCode: a.postalCode } : {}),
+      ...(a.country ? { addressCountry: a.country } : {}),
+    };
+  }
   if (input.geo) node.geo = { "@type": "GeoCoordinates", ...input.geo };
   if (input.priceRange) node.priceRange = input.priceRange;
   if (input.openingHours) node.openingHours = input.openingHours;

@@ -181,6 +181,34 @@ describe("buildOrganization openingHours", () => {
   });
 });
 
+describe("buildOrganization address", () => {
+  it("maps locality/region/country to the real schema.org PostalAddress property names", () => {
+    const ids = createGraphIds(SITE_URL);
+    const node = buildOrganization(
+      {
+        ...ORG_INPUT,
+        address: {
+          streetAddress: "1 Example St",
+          locality: "Uxbridge",
+          region: "Greater London",
+          postalCode: "UB10 9BZ",
+          country: "GB",
+        },
+      },
+      ids,
+    );
+
+    expect(node.address).toEqual({
+      "@type": "PostalAddress",
+      streetAddress: "1 Example St",
+      addressLocality: "Uxbridge",
+      addressRegion: "Greater London",
+      postalCode: "UB10 9BZ",
+      addressCountry: "GB",
+    });
+  });
+});
+
 describe("buildOrganization foundingDate", () => {
   it("emits foundingDate only when provided", () => {
     const ids = createGraphIds(SITE_URL);
