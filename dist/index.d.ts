@@ -166,6 +166,11 @@ type WebsiteInput = {
         targetUrlTemplate: string;
         resultType?: Nullable<string>;
     } | null;
+    /** CSS selectors schema.org's `speakable` should read aloud (voice
+     * assistants/Google Assistant) -- e.g. `['h1', '[data-speakable]']`. */
+    speakable?: {
+        cssSelector: string[];
+    } | null;
 };
 declare function buildWebsite(input: WebsiteInput, ids: GraphIds): Record<string, unknown>;
 /** Convenience for the two nodes almost every page includes: Organization +

@@ -1,6 +1,6 @@
 {
   "name": "@domandigital/graph",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "private": false,
   "description": "Schema.org entity-graph builders: stable @id vocabulary, node builders, and a validator that catches unresolved refs and duplicate @ids before they ship.",
   "license": "UNLICENSED",

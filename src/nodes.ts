@@ -192,6 +192,9 @@ export type WebsiteInput = {
     targetUrlTemplate: string;
     resultType?: Nullable<string>;
   } | null;
+  /** CSS selectors schema.org's `speakable` should read aloud (voice
+   * assistants/Google Assistant) -- e.g. `['h1', '[data-speakable]']`. */
+  speakable?: { cssSelector: string[] } | null;
 };
 
 export function buildWebsite(input: WebsiteInput, ids: GraphIds) {
@@ -212,6 +215,9 @@ export function buildWebsite(input: WebsiteInput, ids: GraphIds) {
         ? { result: { "@type": input.potentialAction.resultType } }
         : {}),
     };
+  }
+  if (input.speakable) {
+    node.speakable = { "@type": "SpeakableSpecification", cssSelector: input.speakable.cssSelector };
   }
   return node;
 }

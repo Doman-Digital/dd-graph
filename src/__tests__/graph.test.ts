@@ -623,6 +623,23 @@ describe("buildWebsite inLanguage", () => {
   });
 });
 
+describe("buildWebsite speakable", () => {
+  it("emits speakable only when provided", () => {
+    const ids = createGraphIds(SITE_URL);
+    const withSpeakable = buildWebsite(
+      { name: "Acme", url: SITE_URL, speakable: { cssSelector: ["h1", "[data-speakable]"] } },
+      ids,
+    );
+    const withoutSpeakable = buildWebsite({ name: "Acme", url: SITE_URL }, ids);
+
+    expect(withSpeakable.speakable).toEqual({
+      "@type": "SpeakableSpecification",
+      cssSelector: ["h1", "[data-speakable]"],
+    });
+    expect(withoutSpeakable.speakable).toBeUndefined();
+  });
+});
+
 describe("buildOrganization contactPoint", () => {
   it("emits ContactPoint nodes only when provided", () => {
     const ids = createGraphIds(SITE_URL);

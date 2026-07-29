@@ -153,6 +153,9 @@ function buildWebsite(input, ids) {
       ...input.potentialAction.resultType ? { result: { "@type": input.potentialAction.resultType } } : {}
     };
   }
+  if (input.speakable) {
+    node.speakable = { "@type": "SpeakableSpecification", cssSelector: input.speakable.cssSelector };
+  }
   return node;
 }
 function buildSpine(organizationInput, websiteInput, ids, types) {
