@@ -568,6 +568,29 @@ describe("buildOrganization contactPoint", () => {
     ]);
     expect(withoutContact.contactPoint).toBeUndefined();
   });
+
+  it("passes through areaServed and availableLanguage when provided", () => {
+    const ids = createGraphIds(SITE_URL);
+    const node = buildOrganization(
+      {
+        ...ORG_INPUT,
+        contactPoint: [
+          { contactType: "customer support", email: "hi@example.com", areaServed: "GB", availableLanguage: ["en"] },
+        ],
+      },
+      ids,
+    );
+
+    expect(node.contactPoint).toEqual([
+      {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: "hi@example.com",
+        areaServed: "GB",
+        availableLanguage: ["en"],
+      },
+    ]);
+  });
 });
 
 describe("findGraphIssues -- new node kinds", () => {

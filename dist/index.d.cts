@@ -125,6 +125,8 @@ type OrganizationInput = {
         contactType: string;
         email?: Nullable<string>;
         telephone?: Nullable<string>;
+        areaServed?: Nullable<string>;
+        availableLanguage?: string[];
     }>;
     /** Registry identifiers (Companies House number, a regulator registration,
      * etc.) as `PropertyValue` rows -- generic Organization data, not niche
