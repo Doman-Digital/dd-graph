@@ -531,6 +531,17 @@ export type ReviewInput = {
   reviewBody: string;
   ratingValue?: number | null;
   url?: Nullable<string>;
+  /** ISO 8601. When did the review get published -- distinct from `reply.updateTime`. */
+  datePublished?: Nullable<string>;
+  /** A business's single reply to this review (GBP review replies are 1:1,
+   * always from the business itself -- never a third party -- so this
+   * carries no separate author field of its own; it's attributed to the
+   * sitewide Organization by @id, same as `itemReviewed`). */
+  reply?: {
+    text: string;
+    /** ISO 8601, when the reply was posted/last edited. */
+    dateCreated?: Nullable<string>;
+  } | null;
 };
 
 /** `itemReviewed` references the sitewide Organization by @id. No `@id` of
@@ -551,6 +562,18 @@ export function buildReview(input: ReviewInput, ids: GraphIds) {
     };
   }
   if (input.url) node.url = input.url;
+  if (input.datePublished) node.datePublished = input.datePublished;
+  if (input.reply?.text) {
+    const comment: Record<string, unknown> = {
+      "@type": "Comment",
+      text: input.reply.text,
+      author: { "@id": ids.org },
+    };
+    if (input.reply.dateCreated) comment.dateCreated = input.reply.dateCreated;
+    // `comment` is a standard CreativeWork property Review inherits -- no
+    // custom/non-standard property invented here.
+    node.comment = comment;
+  }
   return node;
 }
 

@@ -343,6 +343,17 @@ type ReviewInput = {
     reviewBody: string;
     ratingValue?: number | null;
     url?: Nullable<string>;
+    /** ISO 8601. When did the review get published -- distinct from `reply.updateTime`. */
+    datePublished?: Nullable<string>;
+    /** A business's single reply to this review (GBP review replies are 1:1,
+     * always from the business itself -- never a third party -- so this
+     * carries no separate author field of its own; it's attributed to the
+     * sitewide Organization by @id, same as `itemReviewed`). */
+    reply?: {
+        text: string;
+        /** ISO 8601, when the reply was posted/last edited. */
+        dateCreated?: Nullable<string>;
+    } | null;
 };
 /** `itemReviewed` references the sitewide Organization by @id. No `@id` of
  * its own -- nothing else in the graph needs to reference a testimonial. */
