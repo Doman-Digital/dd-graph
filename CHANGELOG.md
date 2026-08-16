@@ -16,6 +16,8 @@ describe what shipped rather than what was recorded at the time.
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-08-16
+
 ### Added
 
 - `./package.json` is now exposed in the `exports` map. Tooling that reads a
@@ -227,7 +229,8 @@ describe what shipped rather than what was recorded at the time.
   `findGraphIssues` to catch unresolved `@id` references and duplicate `@id`s
   before they ship.
 
-[Unreleased]: https://github.com/Doman-Digital/dd-graph/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/Doman-Digital/dd-graph/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/Doman-Digital/dd-graph/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/Doman-Digital/dd-graph/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Doman-Digital/dd-graph/compare/v0.4.4...v0.5.0
 [0.4.4]: https://github.com/Doman-Digital/dd-graph/compare/v0.4.3...v0.4.4
