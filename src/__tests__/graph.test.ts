@@ -6,6 +6,8 @@ import {
   buildBreadcrumbs,
   buildCollectionPage,
   buildContactPage,
+  buildFAQPage,
+  buildItemList,
   buildOfferCatalog,
   buildOrganization,
   buildPerson,
@@ -714,6 +716,120 @@ describe("buildOrganization contactPoint", () => {
         availableLanguage: ["en"],
       },
     ]);
+  });
+});
+
+describe("buildOfferCatalog", () => {
+  it("points each Offer at a Service @id rather than re-serialising the service inline", () => {
+    const ids = createGraphIds(SITE_URL);
+    const catalog = buildOfferCatalog("Our services", [{ slug: "rewiring" }, { slug: "eicr" }], ids);
+
+    expect(catalog).toEqual({
+      "@type": "OfferCatalog",
+      name: "Our services",
+      itemListElement: [
+        { "@type": "Offer", itemOffered: { "@id": ids.service("rewiring") } },
+        { "@type": "Offer", itemOffered: { "@id": ids.service("eicr") } },
+      ],
+    });
+  });
+
+  it("has no @id of its own -- it hangs off the Organization that carries it", () => {
+    const ids = createGraphIds(SITE_URL);
+    const catalog = buildOfferCatalog("Our services", [{ slug: "rewiring" }], ids);
+
+    expect(catalog).not.toHaveProperty("@id");
+  });
+
+  it("is clean when the referenced Services are in the same graph", () => {
+    const ids = createGraphIds(SITE_URL);
+    const graph = buildGraph([
+      ...buildSpine(
+        { ...ORG_INPUT, hasOfferCatalog: buildOfferCatalog("Our services", [{ slug: "rewiring" }], ids) },
+        WEBSITE_INPUT,
+        ids,
+      ),
+      buildService({ name: "Rewiring", slug: "rewiring", url: `${SITE_URL}/services/rewiring` }, ids),
+    ]);
+
+    expect(findGraphIssues(graph)).toEqual([]);
+  });
+
+  it("dangles when the caller forgets the matching buildService nodes -- the documented failure mode", () => {
+    const ids = createGraphIds(SITE_URL);
+    const graph = buildGraph([
+      ...buildSpine(
+        { ...ORG_INPUT, hasOfferCatalog: buildOfferCatalog("Our services", [{ slug: "rewiring" }], ids) },
+        WEBSITE_INPUT,
+        ids,
+      ),
+      // buildService deliberately omitted.
+    ]);
+
+    expect(findGraphIssues(graph)).toEqual([
+      `unresolved @id ref at @graph[0].hasOfferCatalog.itemListElement[0].itemOffered: ${ids.service("rewiring")}`,
+    ]);
+  });
+});
+
+describe("buildFAQPage", () => {
+  it("returns null for an empty list, so buildGraph drops it instead of emitting an empty FAQPage", () => {
+    expect(buildFAQPage([])).toBeNull();
+
+    const ids = createGraphIds(SITE_URL);
+    const graph = buildGraph([...buildSpine(ORG_INPUT, WEBSITE_INPUT, ids), buildFAQPage([])]);
+
+    expect(graph["@graph"]).toHaveLength(2);
+  });
+
+  it("maps each entry to a Question with an accepted Answer", () => {
+    const node = buildFAQPage([{ question: "Do you cover Uxbridge?", answerText: "Yes." }]);
+
+    expect(node).toEqual({
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "Do you cover Uxbridge?",
+          acceptedAnswer: { "@type": "Answer", text: "Yes." },
+        },
+      ],
+    });
+  });
+
+  it("emits @id and speakable only when the options ask for them", () => {
+    const faqs = [{ question: "Q", answerText: "A" }];
+    const bare = buildFAQPage(faqs);
+    const full = buildFAQPage(faqs, { id: `${SITE_URL}/#faq`, speakable: true });
+
+    expect(bare).not.toHaveProperty("@id");
+    expect(bare?.speakable).toBeUndefined();
+    expect(full?.["@id"]).toBe(`${SITE_URL}/#faq`);
+    expect(full?.speakable).toEqual({
+      "@type": "SpeakableSpecification",
+      cssSelector: ["[data-speakable-question]", "[data-speakable-answer]"],
+    });
+  });
+});
+
+describe("buildItemList", () => {
+  it("numbers positions from 1, in the order given", () => {
+    const list = buildItemList([
+      { name: "First", url: `${SITE_URL}/a` },
+      { name: "Second", url: `${SITE_URL}/b` },
+    ]);
+
+    expect(list).toEqual({
+      "@type": "ItemList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "First", url: `${SITE_URL}/a` },
+        { "@type": "ListItem", position: 2, name: "Second", url: `${SITE_URL}/b` },
+      ],
+    });
+  });
+
+  it("emits an empty itemListElement for an empty list rather than throwing", () => {
+    expect(buildItemList([])).toEqual({ "@type": "ItemList", itemListElement: [] });
   });
 });
 
