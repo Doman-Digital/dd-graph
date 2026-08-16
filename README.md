@@ -1,3 +1,9 @@
+> **This repo is archived.** `@domandigital/graph` now lives in the
+> [dd-packages](https://github.com/Doman-Digital/dd-packages) monorepo, at
+> [`packages/graph`](https://github.com/Doman-Digital/dd-packages/tree/main/packages/graph).
+> Open issues and PRs there. This repo's history was preserved via subtree
+> merge; its own commits and tags stay here for reference.
+
 # @domandigital/graph
 
 Schema.org entity-graph builders for Doman Digital client sites: a stable
