@@ -74,15 +74,23 @@ SEO comes up."
    `breadcrumbSchema` implementations under 4 different names before this
    package existed.
 
-8. **Version discipline: tag-based, no npm registry, never a branch.**
-   Consumers pin `"@domandigital/graph": "github:Doman-Digital/dd-graph#vX.Y.Z"`
-   to an exact tag. Bump the version on any type change that could break a
-   consumer at compile time — the `v0.1.0 → v0.1.1` null/undefined fix
-   surfaced as real compile errors in `dd-templates` within minutes of
+8. **Version discipline: semver on npm, published from a tag, never a branch.**
+   Consumers use a normal semver range against the registry
+   (`"@domandigital/graph": "^0.5.1"`). Bump the version on any type change that
+   could break a consumer at compile time. The `v0.1.0` to `v0.1.1` null/undefined
+   fix surfaced as real compile errors in `dd-templates` within minutes of
    wiring it up, which is the system working as intended, not a failure of
-   planning. `dist/` is committed to this repo because there's no CI build
-   step on a git-dependency install; always rebuild and commit `dist/` before
-   tagging.
+   planning.
+
+   Pushing a `vX.Y.Z` tag triggers the release workflow, which checks the tag
+   against `package.json`, then tests, builds and publishes via npm trusted
+   publishing. No npm token is stored anywhere, and every release carries a
+   provenance attestation.
+
+   *Superseded, kept for context:* until 2026-08-16 these were git dependencies
+   pinned to a tag, and `dist/` was committed because a git-dependency install
+   runs no build step. CI builds now, so a committed `dist/` is only a second
+   source of truth waiting to go stale. Removing it is tracked separately.
 
 ## The seam with `@domandigital/seo`
 
@@ -96,8 +104,15 @@ force every consumer onto matching versions of both for any change to either,
 across 15+ repos. Instead the consuming repo composes them at the call site:
 
 ```ts
-const trail = getBreadcrumbTrail(routeKey);   // @domandigital/seo — route facts
-const crumbs = buildBreadcrumbs(ids, trail);  // @domandigital/graph — node shape
+// @domandigital/seo owns the route facts. `labels` is the consumer's own
+// path -> label registry; the trail is derived from it.
+const trail = getBreadcrumbTrail(labels, path);
+
+// @domandigital/graph owns node shape and @id discipline.
+const crumbs = buildBreadcrumbs(
+  trail.map((t) => ({ name: t.label, url: `${siteUrl}${t.path}` })),
+  ids.breadcrumb(path),
+);
 ```
 
 The one touchpoint is breadcrumbs, because a `BreadcrumbList` node is the one

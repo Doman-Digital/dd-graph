@@ -31,44 +31,22 @@ with zero routing configuration -- every `@id` is root-anchored
 
 ## Install
 
-Not published to npm. Consumed as a git dependency pinned to a tag:
-
-```json
-{
-  "dependencies": {
-    "@domandigital/graph": "github:Doman-Digital/dd-graph#v0.1.1"
-  }
-}
+```bash
+pnpm add @domandigital/graph
 ```
 
-`dist/` is committed to this repo (no CI build step runs on a git-dependency
-install), so no build step is required in the consuming project beyond a
-normal `pnpm install`.
+Public on npm, Apache-2.0, published with provenance from a tagged release.
+ESM and CJS builds ship together, each with its own types, so it works under
+both `import` and `require`. Requires Node 20 or newer.
 
-### Known gotcha: Vitest + pnpm git dependencies
-
-If a consuming project uses Vitest and a test imports a real value (not just
-a type) from this package, add `resolve.preserveSymlinks: true` to
-`vitest.config.ts`:
-
-```ts
-export default defineConfig({
-  resolve: { preserveSymlinks: true },
-  // ...
-});
-```
-
-Why: pnpm names this package's virtual-store folder with the git commit
-after a literal `#` (`@domandigital+graph@git+https+++...#<commit>`).
-Vite/vite-node's realpath-to-file-URL resolution treats that `#` as a URL
-fragment delimiter and truncates the path there, so it can never find the
-module -- even though plain Node ESM and Next's own webpack/Turbopack
-bundler resolve the same package fine. `preserveSymlinks` stops Vite from
-ever following the `node_modules/@domandigital/graph` symlink into that
-`#`-containing real path. Both `dd-templates` and `RMP-Electrical` hit this;
-RMP's tests import `createGraphIds` directly and needed the fix, while
-dd-templates' tests currently only import types (erased at compile time) so
-it didn't surface there -- but the fix is in both configs regardless.
+Earlier versions were consumed as a git dependency pinned to a tag. If you're
+upgrading a repo that still does that, replace the
+`github:Doman-Digital/dd-graph#vX.Y.Z` specifier with a normal semver range.
+You can also drop `resolve.preserveSymlinks: true` from `vitest.config.ts` if
+it was added for this package: that worked around pnpm putting a literal `#`
+in the git dependency's virtual-store path, which Vite truncated as a URL
+fragment. Registry installs have no `#` in the path, so the workaround is
+dead weight now.
 
 ## Usage
 
@@ -122,13 +100,22 @@ export function JsonLdScript({ graph }: { graph: JsonLdGraph }) {
 
 ```bash
 pnpm install
-pnpm test        # vitest
+pnpm test         # vitest
 pnpm typecheck    # tsc --noEmit
-pnpm build        # tsup -> dist/ (commit the result)
+pnpm build        # tsup -> dist/
 ```
+
+CI runs all three on every push and pull request, across Node 20, 22 and 24.
 
 ## Versioning
 
-Tag-based, not npm-published. Bump `version` in `package.json`, rebuild
-`dist/`, commit, and tag (`git tag vX.Y.Z && git push --tags`). Consumers pin
-to a tag in their `package.json`, never to a branch.
+Semver, published to npm on tag push. Bump `version` in `package.json`, commit,
+then tag (`git tag vX.Y.Z && git push --tags`). The release workflow checks the
+tag against `package.json` and refuses to publish if they disagree, then builds
+and publishes via npm trusted publishing, so no npm token is stored anywhere and
+every release carries a provenance attestation.
+
+Consumers use a normal semver range. Because this is still `0.x`, a minor bump
+can carry a type change that surfaces as a compile error in a consumer, which is
+the system working: the `v0.1.0` to `v0.1.1` null/undefined fix did exactly that
+within minutes of being wired up.
