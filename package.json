@@ -3,7 +3,7 @@
   "version": "0.5.0",
   "private": false,
   "description": "Schema.org entity-graph builders: stable @id vocabulary, node builders, and a validator that catches unresolved refs and duplicate @ids before they ship.",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -19,6 +19,8 @@
     }
   },
   "files": [
+    "LICENSE",
+    "README.md",
     "dist"
   ],
   "scripts": {
@@ -35,5 +37,17 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "pnpm@9.15.9"
+  "packageManager": "pnpm@9.15.9",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Doman-Digital/dd-graph.git"
+  },
+  "homepage": "https://github.com/Doman-Digital/dd-graph#readme",
+  "bugs": {
+    "url": "https://github.com/Doman-Digital/dd-graph/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }
